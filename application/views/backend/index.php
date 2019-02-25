@@ -21,24 +21,31 @@
 	
 
 	<?php include 'includes_top.php';?>
-	<?php //include 'privileges.php';?>
+	<?php include 'privileges.php';?>
 </head>
 <body class="page-body <?php if ($skin_colour != '') echo 'skin-' . $skin_colour;?> page-fade-only">
-	<div class="page-container <?php if ($text_align == 'right-to-left') echo 'right-sidebar';?>" >
+	<div class="page-container sidebar-collapsed <?php if ($text_align == 'right-to-left') echo 'right-sidebar';?>" ><!--sidebar-collapsed-->
 		<?php include 'navigation.php';?>	
 		<div class="main-content">
 		
 			<?php include 'header.php';?>
-			
-					<h3 style="">
-				       <i class="entypo-right-circled"></i> 
-							<?php echo $page_title;?>
-				    </h3>
-				    
+					<div class="row">
+						<div class="col-xs-12">
+							<h3 style="" class="pull-left">
+						       <i class="entypo-right-circled"></i> 
+									<?php echo $page_title;?>
+						    </h3>
+						    
+						    <span title="<?=get_phrase('back');?>" style="cursor: pointer;" class="fa fa-reply pull-right" onclick="javascript:go_back();"></span>
+						</div>
+					</div>
+					
+				  <hr />  
 				<div class="page-content">	
 		           <!--Showing Progress GIF. Must be available in evert form-->
-					<div class="inner-progress"><?=$message;?></div>
+					
 					<?php include $view_type.'/'.$page_name.'.php';?>
+					<?php include 'debug.php';?>
 				</div>
 			<?php include 'footer.php';?>
 

@@ -6,7 +6,7 @@
  *
  * This content is released under the MIT License (MIT)
  *
- * Copyright (c) 2014 - 2015, British Columbia Institute of Technology
+ * Copyright (c) 2014 - 2018, British Columbia Institute of Technology
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,10 @@
  *
  * @package	CodeIgniter
  * @author	EllisLab Dev Team
- * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (http://ellislab.com/)
- * @copyright	Copyright (c) 2014 - 2015, British Columbia Institute of Technology (http://bcit.ca/)
+ * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (https://ellislab.com/)
+ * @copyright	Copyright (c) 2014 - 2018, British Columbia Institute of Technology (http://bcit.ca/)
  * @license	http://opensource.org/licenses/MIT	MIT License
- * @link	http://codeigniter.com
+ * @link	https://codeigniter.com
  * @since	Version 1.0.0
  * @filesource
  */
@@ -42,7 +42,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *
  * @category	Database
  * @author	EllisLab Dev Team
- * @link	http://codeigniter.com/user_guide/database/
+ * @link	https://codeigniter.com/user_guide/database/
  *
  * @param 	string|string[]	$params
  * @param 	bool		$query_builder_override
@@ -57,8 +57,7 @@ function &DB($params = '', $query_builder_override = NULL)
 		if ( ! file_exists($file_path = APPPATH.'config/'.ENVIRONMENT.'/database.php')
 			&& ! file_exists($file_path = APPPATH.'config/database.php'))
 		{
-			fopen(APPPATH.'config/database.php', "w");
-			//show_error('The configuration file database.php does not exist.');
+			show_error('The configuration file database.php does not exist.');
 		}
 
 		include($file_path);
@@ -85,13 +84,7 @@ function &DB($params = '', $query_builder_override = NULL)
 
 		if ( ! isset($db) OR count($db) === 0)
 		{
-			//show_error('No database connection settings were found in the database config file.');
-			if(file_exists(FCPATH.'install')){
-				redirect(base_url() . 'install', 'refresh');
-			}else{
-				show_error('No database connection settings were found in the database config file.');
-			}
-			
+			show_error('No database connection settings were found in the database config file.');
 		}
 
 		if ($params !== '')

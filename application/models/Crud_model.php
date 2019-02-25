@@ -25,7 +25,6 @@ class Crud_model extends CI_Model {
 	
 	
 	function get_field_value($type, $search_field = '', $search_value = 'name',$show_field) {
-        //return $this->db->get_where($type, array($type . '_id' => $type_id))->row()->$field;
         if($this->db->get_where($type, array($search_field => $search_value))->num_rows() > 0 ){
         	return $this->db->get_where($type, array($search_field => $search_value))->row()->$show_field;
         }else{
@@ -54,6 +53,31 @@ class Crud_model extends CI_Model {
 	}
 	
 	
+	public function get_type_results_as_object($type,$field=array()){
+		$result = "";
+		
+		if(count($field) == 0){
+			$result = $this->db->get($type)->result_object();
+		}else{
+			$this->db->where($field);
+			$result = $this->db->get($type)->result_object();
+		}
+		
+		return $result;
+	}
+	
+	public function get_type_results_as_array($type,$field=array()){
+		$result = "";
+		
+		if(count($field) == 0){
+			$result = $this->db->get($type)->result_object();
+		}else{
+			$this->db->where($field);
+			$result = $this->db->get($type)->result_object();
+		}
+		
+		return $result;
+	}
 	
 	    
     ////////BACKUP RESTORE/////////

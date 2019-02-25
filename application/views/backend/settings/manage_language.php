@@ -53,7 +53,7 @@
                                     
                                     <h3><?php echo $row['phrase'];?></h3>
                                     <p>
-                                    	<input type="text" name="phrase<?php echo $row['phrase_id'];?>" 	
+                                    	<input type="text" name="phrase[<?php echo $row['phrase_id'];?>]" 	
                                     		value="<?php echo $phrase_language;?>" class="form-control"/>
                                     </p>
                                 </div>

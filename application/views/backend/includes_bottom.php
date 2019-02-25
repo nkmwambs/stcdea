@@ -25,16 +25,14 @@
 	<script src="<?php echo base_url();?>assets/js/neon-custom.js"></script>
 	<script src="<?php echo base_url();?>assets/js/neon-demo.js"></script>
 	
-
-	
 	<!--Font Awesome-->
 	
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
 	
 	<!-- Toggle Button -->
 	
-	<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
-	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+	<!-- <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script> -->
 	
 	<!-- Bootstrap Switch -->
 	<script src="<?php echo base_url();?>assets/js/bootstrap-switch.min.js"></script>
@@ -62,16 +60,23 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.css"/>
 
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.17.0/dist/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.17.0/dist/additional-methods.min.js"></script>
+
+
 <!--Table Header Fixer-->
-<script src="<?php echo base_url();?>assets/js/tableHeadFixer.js"></script>
+<!-- <script src="<?php echo base_url();?>assets/js/tableHeadFixer.js"></script> -->
 
 <!--Print This JS-->
 <script src="<?php echo base_url();?>assets/js/printThis.js"></script>
 
 <!--my extension-->
-<script src="<?php echo base_url();?>assets/js/myExtension.js"></script>
+<!-- <script src="<?php echo base_url();?>assets/js/myExtension.js"></script> -->
 
 <script src="<?=base_url();?>assets/js/jquery.multi-select.js"></script>
+
 
 <!-- SHOW TOASTR NOTIFIVATION -->
 <?php if ($this->session->flashdata('flash_message') != ""):?>

@@ -26,13 +26,14 @@ class Email_model extends CI_Model {
 	
 	function password_reset_email($new_password = '' , $email = '')
 	{
-		$query			=	$this->db->get_where(users , array('email' => $email));
+		$query			=	$this->db->get_where("user" , array('email' => $email));
 		if($query->num_rows() > 0)
 		{
 			
-			$email_msg	=	"Dear ".$query->row()->firstname.",<br />";
-			$email_msg	.=	"Your password is : ".$new_password."<br />";
-			
+			$email_msg	=	"Dear ".$query->row()->name.",<br />";
+			$email_msg	=   "You have requested to a password change on ".date('jS F Y')."</br>";
+			$email_msg	.=	"Your new password is : ".$new_password."<br />";
+			$email_msg	.=	"If you fill this is an error kindly notify the accounts office for an investigation<br>";
 			$email_sub	=	"Password reset request";
 			$email_to	=	$email;
 			$this->do_email($email_msg , $email_sub , $email_to);
@@ -111,7 +112,7 @@ class Email_model extends CI_Model {
 		$this->email->to($to);
 		$this->email->subject($sub);
 		
-		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://www.compassion-africa.org\">&copy; 2018 ".get_phrase("AFR_staff_recognition_system")."</a></center>";
+		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://www.compassion-africa.org\">&copy; 2018 ".$this->db->get_where('settings' , array('type'=>'system_name'))->row()->description."</a></center>";
 		$this->email->message($msg);
 		
 		$this->email->send();

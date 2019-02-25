@@ -60,7 +60,7 @@ $autoload['packages'] = array();
 |	$autoload['libraries'] = array('user_agent' => 'ua');
 */
 
-$autoload['libraries'] = array('pagination', 'xmlrpc' , 'form_validation', 'email','upload','image_lib','Grocery_CRUD');
+$autoload['libraries'] = array('Stcdea_CRUD','excel','pagination', 'xmlrpc' , 'form_validation', 'email','upload','image_lib','Grocery_CRUD');
 
 
 /*
@@ -88,7 +88,7 @@ $autoload['drivers'] = array();
 |	$autoload['helper'] = array('url', 'file');
 */
 
-$autoload['helper'] = array('url','file','form','security','string','inflector','directory','download','multi_language','download','thumbnail','ziparchive','files');
+$autoload['helper'] = array('url','file','form','security','string','inflector','directory','download','multi_language','download','thumbnail','ziparchive','files','access_profiling');
 
 
 /*
@@ -137,4 +137,4 @@ $autoload['language'] = array();
 |	$autoload['model'] = array('first_model' => 'first');
 */
 
-$autoload['model'] = array('email_model' , 'crud_model' , 'sms_model','file');
+$autoload['model'] = array('email_model' , 'crud_model' , 'sms_model','file','budget_model');

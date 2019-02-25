@@ -86,8 +86,9 @@
 		document.getElementById('delete_link').setAttribute('href' , delete_url);
 	}
 	
-	function confirm_action(url)
+	function confirm_action(url,perform_link="")
 	{
+		if(perform_link == "") perform_link = 'perform_link'; 
 		jQuery('#modal-5').modal('show', {backdrop: 'static'});
 		document.getElementById('perform_link').setAttribute('href' , url);
 	}
@@ -166,4 +167,104 @@
             </div>
         </div>
     </div>
+
+<style>
+	#overlay {
+    position: fixed; /* Sit on top of the page content */
+    display: none; /* Hidden by default */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0; 
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+#overlay img{
+	display: block;
+	margin-top:25%;
+	margin-left: auto;
+    margin-right: auto;
+} 
+</style>
+
+<script>
+
+	function PrintElem(elem)
+    {
+        $(elem).printThis({ 
+		    debug: false,              
+		    importCSS: true,             
+		    importStyle: true,         
+		    printContainer: false,       
+		    loadCSS: "", 
+		    pageTitle: "Print Report",             
+		    removeInline: false,        
+		    printDelay: 333,            
+		    header: 'BVA Allocation',             
+		    formValues: true          
+		});
+    }
     
+
+function go_back(){
+	window.history.back();
+}
+
+	// $(".datepicker").datepicker();
+	
+	
+	
+	$(document).ready(function(){
+		$(".datatable").DataTable(
+			{
+				dom: 'lBfrtip',
+				buttons: [
+	            	'copy', 'csv', 'excel', 'pdf', 'print'//Use this to spedify the button to see or leave it to have all buttons
+	        	],
+				"ordering": true,
+			    "stateSave": true,
+			    "scrollX": false
+			 }
+		);
+	});
+
+		
+	$(function(){
+		$("#debug").hide();
+		
+	});
+	
+	$(document).ajaxSuccess(function(event,xhr,settings){
+		$("#overlay").css('display','none'); 
+		$("#debug").html(xhr.responseText);
+		
+		if ( ! $.fn.DataTable.isDataTable( '.datatable' ) ) {
+			$(".datatable").DataTable(
+				{
+					dom: 'lBfrtip',
+					buttons: [
+		            	'copy', 'csv', 'excel', 'pdf', 'print'//Use this to spedify the button to see or leave it to have all buttons
+		        	],
+					"ordering": true,
+				    "stateSave": true,
+				    "scrollX": false
+				 }
+			);
+		} 
+			
+	}).ajaxSend(function(event,xhr,settings){
+		$("#overlay").css('display','block'); 
+	}).ajaxError(function(event){
+		alert("Error Occurred!");
+		$("#overlay").css('display','none'); 
+	}); 
+	
+
+	
+</script>
+
+<div id="overlay"><img src='<?php echo base_url()."assets/images/preloader4.gif";?>'/></div>

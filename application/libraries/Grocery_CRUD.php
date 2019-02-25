@@ -1699,7 +1699,8 @@ class grocery_CRUD_Layout extends grocery_CRUD_Model_Driver
 		}
 
 		// Convert to UTF-16LE and Prepend BOM
-		$string_to_export = "\xFF\xFE" .mb_convert_encoding($string_to_export, 'UTF-16LE', 'UTF-8');
+		//$string_to_export = "\xFF\xFE" .mb_convert_encoding($string_to_export, 'UTF-16LE', 'UTF-8');
+		$string_to_export = htmlspecialchars_decode(utf8_decode(htmlentities($string_to_export, ENT_COMPAT, 'utf-8', false)));
 
 		$filename = "export-".date("Y-m-d_H:i:s").".xls";
 

@@ -179,13 +179,18 @@ class Settings extends CI_Controller
 		}
 		if ($param1 == 'update_phrase') {
 			$language	=	$param2;
-			$total_phrase	=	$this->input->post('total_phrase');
-			for($i = 1 ; $i < $total_phrase ; $i++)
-			{
-				//$data[$language]	=	$this->input->post('phrase').$i;
-				$this->db->where('phrase_id' , $i);
-				$this->db->update('language' , array($language => $this->input->post('phrase'.$i)));
+			// $total_phrase	=	$this->input->post('total_phrase');
+			// for($i = 1 ; $i < $total_phrase ; $i++)
+			// {
+				// $this->db->where('phrase_id' , $i);
+				// $this->db->update('language' , array($language => $this->input->post('phrase'.$i)));
+			// }
+			
+			foreach($this->input->post('phrase') as $key=>$value){
+				$this->db->where('phrase_id' , $key);
+				$this->db->update('language' , array($language => $value));
 			}
+			
 			redirect(base_url() . 'settings/manage_language/edit_phrase/'.$language, 'refresh');
 		}
 		if ($param1 == 'do_update') {

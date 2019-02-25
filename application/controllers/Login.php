@@ -66,7 +66,30 @@ class Login extends CI_Controller {
 			$row =  $query->row();
 		    $this->session->set_userdata('user_login', '1');
 		    $this->session->set_userdata('login_user_id', $row->user_id);
-		    $this->session->set_userdata('name', $row->name);				
+		    $this->session->set_userdata('name', $row->name);
+		    $this->session->set_userdata('profile_id', $row->profile_id);
+			$this->session->set_userdata('is_super_user', $row->is_super_user);	
+			$this->session->set_userdata('role_id', $row->role_id);
+			$this->session->set_userdata('office_id', $row->office_id);
+			
+			$this->db->join('entitlement','entitlement.entitlement_id=access.entitlement_id');
+			$this->db->select(array('entitlement.name as privilege'));
+			$access_obj = $this->db->get_where('access',array('profile_id'=>$row->profile_id));
+			
+			//Set up the privilege array to be used to check if the privilege exists for a logged user
+			$privileges = array();
+			
+			if($access_obj->num_rows() > 0){
+				$privileges = array_column($access_obj->result_array(),'privilege');
+			}
+			
+			$this->session->set_userdata('privileges', $privileges);	
+			$this->session->set_userdata('profile_id', $row->profile_id);	
+			
+			//Flag the user as a logged in user in the database
+			$this->db->where(array('user_id'=>$row->user_id));
+			$this->db->update('user',array('online'=>1));
+						
             return 'success';
         }
 
@@ -106,9 +129,8 @@ class Login extends CI_Controller {
         }
        
 
-        // send new password to user email  
-        //$this->email_model->password_reset_email($new_password , $email);
-        //$this->email_model->manage_account_email($query->row()->user_id,"password_reset",$new_password);
+        //send new password to user email  
+        $this->email_model->password_reset_email($new_password , $email);
 
         $resp['submitted_data'] = $_POST;
 
@@ -118,6 +140,10 @@ class Login extends CI_Controller {
     /*     * *****LOGOUT FUNCTION ****** */
 
     function logout() {
+    	//Update the user table online field to 0 for logged out user
+    	$this->db->where(array('user_id'=>$this->session->login_user_id));
+    	$this->db->update('user',array('online'=>0));
+    	
         $this->session->sess_destroy();
         $this->session->set_flashdata('logout_notification', 'logged_out');
         redirect(base_url(), 'refresh');
