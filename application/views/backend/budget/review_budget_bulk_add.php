@@ -1,6 +1,11 @@
 <?php
 //print_r($uploaded_data);
 ?>
+<style>
+	input{
+		min-width: 100px;
+	}
+</style>
 <div class="row">
 	<div class="col-xs-12">
 		<a href="#" onclick="javascript:go_back();" class="btn btn-default"><?=get_phrase('show_listing');?> <i class="fa fa-reply"></i></a>
