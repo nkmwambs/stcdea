@@ -35,11 +35,11 @@
 */
 
 // The following values will probably need to be changed.
-$db['default']['dsn'] = 'mysql:host=localhost;dbname=stcbva_stcdea';
+$db['default']['dsn'] = 'mysql:host=localhost;dbname=stchild';
 $db['default']['hostname'] = "localhost";
-$db['default']['username'] = "stcbva_stcdea";
+$db['default']['username'] = "compatl8_root";
 $db['default']['password'] = "@Compassion123";
-$db['default']['database'] = "stcbva_stcdea";
+$db['default']['database'] = "stchild";
 
 
 // The following values can probably stay the same.
