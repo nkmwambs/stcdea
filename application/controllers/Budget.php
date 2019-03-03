@@ -1572,11 +1572,14 @@ class Budget extends CI_Controller
 		$dea_keyed_commitment = array_combine($commitment_dea, $commitment_amount);
 		
 		/**Budget Allocated ammount**/
-		$where_string .= "alloc_year =>YEAR('".$month_start_date."')";
+		$latest_forecast = $this->get_lasted_year_forecast(date('Y',strtotime($month_start_date)));
+		$where_string = "alloc_year = YEAR('".$month_start_date."') AND forecast_period = ".$latest_forecast;
 		$this->db->select_sum('amount');
 		$this->db->select('allocation.dea_id');
 		$this->db->join('dea','dea.dea_id = allocation.dea_id');
-		if($office_id != "")  $this->db->where(array('office_id'=>$office_id,'budget_section_id'=>$budget_section_id));
+		$this->db->join('budget','budget.budget_id=allocation.budget_id');	
+		if($office_id != "")  $this->db->where(array('dea.office_id'=>$office_id,'dea.budget_section_id'=>$budget_section_id));
+		$this->db->where($where_string);
 		$this->db->group_by('allocation.dea_id');
 		$allocation = $this->db->get('allocation')->result_array();
 		

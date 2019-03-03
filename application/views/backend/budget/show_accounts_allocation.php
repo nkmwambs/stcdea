@@ -63,8 +63,7 @@ $accounts_with_dea = $this->budget_model->accounts_with_dea($office_id,$start_da
 										<td>
 											<?php 
 											
-												$dea = $this->db->get_where("dea",array("office_id"=>$this->session->office_id,
-													"dea_id"=>$value->dea_id))->row();
+												$dea = $this->db->get_where("dea",array("dea_id"=>$value->dea_id))->row();
 												echo $dea->dea_code.": ".$dea->description;
 											?>
 										</td>
