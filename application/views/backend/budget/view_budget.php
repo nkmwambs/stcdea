@@ -6,6 +6,8 @@ array('role_id'=>$this->session->role_id,'restricted_to_object'=>'view_budget'))
 
 if($view_budget_restriction ==  0){
 
+//echo $test;
+
 ?>
 <div class="row">
 	<div class="col-xs-12">
@@ -87,7 +89,7 @@ if(isset($load_budget)){
 							<table class="table table-striped datatable">
 									<thead>
 										<tr>
-											<th colspan="17">
+											<th colspan="16">
 												<a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a>
 											</th>
 										</tr>
@@ -95,12 +97,14 @@ if(isset($load_budget)){
 											<th colspan="8">
 												<?=get_phrase('office_name')?>: <?=$office_name;?>	
 											</th>
-											<th colspan="9">
+											<th colspan="8">
 												<?=get_phrase('office_code')?>: <?=$this->crud_model->get_field_value("office","office_id",$office_code,"office_code");?>												
 											</th>
 
 										</tr>
 										<tr>
+											<th><?=get_phrase('global_key');?></th>
+											<th><?=get_phrase('forecast_period');?></th>
 											<!--Budget type dependant fields -->
 											<?php
 												foreach($budget_section_fields as $fields){
@@ -131,6 +135,8 @@ if(isset($load_budget)){
 											foreach($data as $budget_id=>$row){
 										?>
 										<tr>
+												<td><?=$row['header']['global_key'];?></td>
+												<td><?=$row['header']['forecast_period'];?></td>
 										<?php		
 												foreach($budget_section_fields as $fields){
 													$table_id = $this->db->get_where('budget',

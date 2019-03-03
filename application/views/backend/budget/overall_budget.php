@@ -1,5 +1,5 @@
 <?php
-print_r($records);
+//print_r($records);
 ?>
 <div class="row">
 	<div class="col-sm-12">

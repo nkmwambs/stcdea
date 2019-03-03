@@ -1,5 +1,4 @@
 <?php
-//print_r($bva_updates);
 
 $current_date = isset($current_month)?$current_month:$month_epoch;
 

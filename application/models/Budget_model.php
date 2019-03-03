@@ -166,6 +166,13 @@ class Budget_model extends CI_Model{
 		return $allocations;
 	}
 	
+	function get_lasted_year_forecast($year){
+		
+		$this->db->select_max('forecast_period');
+		$this->db->where(array('YEAR(start_date)'=>$year));
+		return $this->db->get_where('budget')->row()->forecast_period;
+	}
+	
 	function add_allocation_to_account_staff_record($accounts,$year){
 		
 		$this->db->select(array('budget_id','dea_id','amount'));
@@ -203,8 +210,10 @@ class Budget_model extends CI_Model{
 		$budget_section_id = $this->db->get_where('budget_section',array('short_name'=>$budget_type))->row()
 		->budget_section_id;
 		
+		$latest_forecast = $this->get_lasted_year_forecast(date('Y',strtotime($start_date)));
+		
 		$where_string = "start_date >= '".$first_day_of_the_year."' AND end_date <= '".$last_day_of_the_year."' AND 
-		budget_section_id = ".$budget_section_id;
+		budget_section_id = ".$budget_section_id.' AND forecast_period = '.$latest_forecast;
 		$this->db->where($where_string);
 		$this->db->select_sum('amount');
 		$this->db->select(array($related_table.'_id','name',$related_table.'_code','office_code as office_id','budget.budget_id','start_date'));

@@ -1,6 +1,7 @@
 <?php
 if($this->session->login_user_id == 1){
 	//print_r($bva_update);
+	//echo $latest_bva_update;
 }
 ?>
 <style>
@@ -65,6 +66,9 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 	</div>
 	<div class="col-sm-12 ">
 		<span class="" style="font-weight: bold;">Office: </span><?=$this->db->get_where('office',array('office_id'=>$office_id))->row()->name;?>
+	</div>
+	<div class="col-sm-12 ">
+		<span class="" style="font-weight: bold;">Latest BVA Update: </span><?=date('jS F Y',strtotime($latest_bva_update));;?>
 		
 	</div>
 </div>

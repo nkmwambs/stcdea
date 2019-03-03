@@ -1,5 +1,6 @@
 <?php
 //print_r($uploaded_data);
+//echo date('n');
 ?>
 <style>
 	input{
@@ -34,10 +35,10 @@
 					foreach($uploaded_data as $key=>$value){
 						if($key == 0) continue;
 						
-						if(!empty($value[0])){
+						if($value[0] !== ""){
 				?>
 					<tr>
-						<td>
+						<td nowrap="nowrap">
 							<div class="btn-group left-dropdown">
 								<a class="btn btn-default" href="#"><?=get_phrase('action');?></a>
 								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
@@ -58,12 +59,12 @@
 					
 						<?php 
 							$column_count = 0; foreach($value as $cell_key=>$cell_value):
-							if(count($value) == 17){
-								if($cell_key == 3 || $cell_key == 4){
+							if(count($value) == 18){// Staff Cost
+								if($cell_key == 4 || $cell_key == 5){
 									$cell_value = date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($cell_value));
 								}
-							}else{
-								if($cell_key == 2 || $cell_key == 3){
+							}else{//Thematic/ Non Thematic == 19
+								if($cell_key == 5 || $cell_key == 6){
 									if(is_numeric($cell_value)){
 										$cell_value = date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($cell_value));	
 									}
@@ -78,6 +79,7 @@
 						<?php $column_count++; endforeach;?>
 					</tr>
 				<?php
+						$row_count ++;
 					}	
 					}
 				?>
@@ -85,8 +87,8 @@
 			<tfoot>
 				<tr>
 					
-					<td>
-						<div id="btn_confirm" class="btn btn-default">Confirm <i class="fa fa-thumbs-up"></i></div>
+					<td colspan="17">
+						<div id="btn_confirm" class="btn btn-default">Confirm (Uploading Count: <?=$row_count;?> records) <i class="fa fa-thumbs-up"></i></div>
 					</td>
 				</tr>
 			</tfoot>

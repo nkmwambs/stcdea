@@ -47,18 +47,21 @@ class Budget extends CI_Controller
 
 		$active_office_id = array_column($offices, 'office_id');		
 		
+		//Get Lasted forecast period
+		$lasted_forecast_period = $this->get_lasted_year_forecast(date('Y',strtotime($start_date)));
+		
 		//Get budget items
 		
-		$this->db->where(array('start_date>='=>$start_date,"end_date<="=>$end_date,"budget_section_id"=>$section_id));
+		$this->db->where(array('forecast_period'=>$lasted_forecast_period,'start_date>='=>$start_date,"end_date<="=>$end_date,"budget_section_id"=>$section_id));
 		if($office_id!=="") $this->db->where(array('office_code'=>$office_id));
 		$this->db->join('budget_spread','budget_spread.budget_id=budget.budget_id');
 		if($section_id == 1){
-			$this->db->select(array('budget.budget_id','budget.budget_section_id','budget.office_code',
+			$this->db->select(array('global_key','forecast_period','budget.budget_id','budget.budget_section_id','budget.office_code',
 			'related_table_primary_key_value','staff_code as item_code','staff.name as item_name','description','start_date','end_date','status',
 			'month','budget_spread.amount'));
 			$this->db->join('staff','staff.staff_id=budget.related_table_primary_key_value');
 		}else{
-			$this->db->select(array('budget.budget_id','budget.budget_section_id','budget.office_code',
+			$this->db->select(array('global_key','forecast_period','budget.budget_id','budget.budget_section_id','budget.office_code',
 			'budget.related_table_primary_key_value','budget_account.budget_account_code as item_code','budget_account.name as item_name',
 			'budget.description','budget.start_date','budget.end_date','budget.status',
 			'budget_spread.month','budget_spread.amount'));
@@ -70,12 +73,13 @@ class Budget extends CI_Controller
 		
 		$cnt = 1;
 		foreach($budget as $row){
-			$grouped[$row->office_code][$row->budget_id]['header'] = array('budget_id'=>$row->budget_id,
-			 "budget_section_id"=>$row->budget_section_id,"office_code"=>$row->office_code,
-			 "related_table_primary_key_value"=>$row->related_table_primary_key_value,
-			 'item_code'=>$row->item_code,'item_name'=>$row->item_name,
-			 "description"=>$row->description,"start_date"=>$row->start_date,"end_date"=>$row->end_date,
-			 "status"=>$row->status);
+			$grouped[$row->office_code][$row->budget_id]['header'] = array('global_key'=>$row->global_key,
+			'forecast_period'=>$row->forecast_period,'budget_id'=>$row->budget_id,
+			"budget_section_id"=>$row->budget_section_id,"office_code"=>$row->office_code,
+			"related_table_primary_key_value"=>$row->related_table_primary_key_value,
+			'item_code'=>$row->item_code,'item_name'=>$row->item_name,
+			"description"=>$row->description,"start_date"=>$row->start_date,"end_date"=>$row->end_date,
+			"status"=>$row->status);
 			
 			$grouped[$row->office_code][$row->budget_id]['spread'][$row->month] = $row->amount;
 			
@@ -128,6 +132,13 @@ class Budget extends CI_Controller
 		return $budgeted_related_table_ids_list;
 	}
 	
+	function get_lasted_year_forecast($year){
+		
+		$this->db->select_max('forecast_period');
+		$this->db->where(array('YEAR(start_date)'=>$year));
+		return $this->db->get_where('budget')->row()->forecast_period;
+	}
+	
 	function view_budget($param1="",$param2=""){
 		if ($this->session->userdata('user_login') != 1 ||
 			(!in_array(__FUNCTION__, $this->session->privileges) && $this->session->is_super_user != 1)
@@ -165,6 +176,8 @@ class Budget extends CI_Controller
 		
 		$budget_section_fields = $this->db->get_where('budget_section_field',
 		array('budget_section_id'=>$budget_section_id))->result_object();
+		
+		//$page_data['test'] = $this->get_lasted_year_forecast($office_id,$budget_section_id,'2019');
 		
 		$page_data['office_id'] = "";
 		
@@ -515,8 +528,12 @@ class Budget extends CI_Controller
 		$first_day_of_the_year = date('Y-m-01',strtotime('first day of january',$first_day_of_the_year_epoch));
 		$last_day_of_the_year = date('Y-m-t',strtotime('last day of december',$first_day_of_the_year_epoch));
  		
+		$latest_forecast = $this->get_lasted_year_forecast(date('Y',$first_day_of_the_year_epoch));
+		
 		$where_string = "start_date >= '".$first_day_of_the_year."' AND 
-		end_date <= '".$last_day_of_the_year."' AND budget_section_id = ".$section_id;
+		end_date <= '".$last_day_of_the_year."' AND budget_section_id = ".$section_id." 
+		AND forecast_period = ".$latest_forecast;
+		
 		
 		$this->db->where($where_string);
 		$this->db->select(array($table.'_id',$table.'.name',$table.'_code','budget.office_code',
@@ -543,9 +560,8 @@ class Budget extends CI_Controller
 		}	
 		
 	
-		$page_data['bva_update'] = $this->get_month_bva_update(date('Y-m-01'),$office_id,$section_id);
-		
-
+		$page_data['bva_update'] = $this->get_month_bva_update($this->get_latest_bva_start_date(),$office_id,$section_id);
+		$page_data['latest_bva_update'] = $this->get_latest_bva_start_date();
 		$page_data['office_id'] = $office_id;
 		$page_data['table'] = $table; 
 		$page_data['records'] = $records;
@@ -748,7 +764,7 @@ class Budget extends CI_Controller
   			$xlsx = new SimpleXLSX('uploads/excel/'.$template.'_update_template.xlsx');
 
   			//list($num_cols, $num_rows) = $xlsx->dimension();
-			//unlink('uploads/excel/'.$template.'_update_template.xlsx');	
+			unlink('uploads/excel/'.$template.'_update_template.xlsx');	
   		}
 				
 		$page_data['budget_type'] = $template;
@@ -763,77 +779,196 @@ class Budget extends CI_Controller
   	}
 
 	function upload_reviewed_data($param1=""){
+		//Assign the posted grid to a variable	
 		$reviewed_upload = $this->input->post();
 		
+		//A holder of header information
 		$header = array();
 		
+		//A holder of month's spread dat
 		$spread = array();
 		
+		//Count of created records initialized
 		$count_created = 0;
 		
+		//Count of update records initialized
 		$count_updated = 0;
 		
+		//Total number of affected records i.e. created or updated
 		$total_affected_records = 0;
 		
+		/**
+		 * Budget type item code e.g. for staff cost budget this is staff_code (Corresponds to staff_code in the staff table), 
+		 * thematic/ non thematic cost is budget_account_code (Corresponds to budget_account_code of the budget_account table)		 
+		 * */
 		$table_code_field = "";
 		
+		//Primary key of the of the staff or budget_account of the record being uploaded.
 		$table_primary_key_field = "";
 		
-		for($i=0;$i<sizeof($reviewed_upload['month_1']);$i++){
-			
-			$table = $this->db->get_where('budget_section',array('short_name'=>$param1))
-			 ->row()->related_table;
-			 
-			 $budget_section_id = $this->db->get_where('budget_section',array('short_name'=>$param1))
+		/** 
+		 * Intended to get the name of the table holding the units of the budget e.g. Units can be 
+		 * staff or budget_account. The variable below return staff or budget_account
+		 * */
+		$table = $this->db->get_where('budget_section',array('short_name'=>$param1))
+		 ->row()->related_table;
+		
+		/**
+		 * Get the budget_section_id of the budget type from the budget_section table.
+		 * It returns 1 for staff cost budget, 2 for themaic cost and 3 for non thematic cost budget
+		 */
+		  
+		$budget_section_id = $this->db->get_where('budget_section',array('short_name'=>$param1))
 			 ->row()->budget_section_id;
  			
-			$table_code_field = $table."_code";
+		/**
+		 * This equals the field name that has the code of the unit 
+		 * e.g. staff_code or budget_account_code 
+		 */
+		
+		$table_code_field = $table."_code";
+		
+		/**
+		 * Gives the primary key field name of the budget units table. Can either be staff_id or
+		 * budget_account_id
+		 */
 			
-			$table_primary_key_field = $table."_id";
+		$table_primary_key_field = $table."_id";
+		
+		/**
+		 * Get the size of the records to be uploaded. 
+		 * Note outer keys of the post array are the headers of the review grid. Each has a size equaling
+		 * to the number of rows in the grid. The choice of month 1 is a coincidence but all column name
+		 * ca be used.
+		 * **/
+		 
+		for($i=0;$i<sizeof($reviewed_upload['month_1']);$i++){
  			
 			if(isset($reviewed_upload[$table.'_code'][$i])){
-			
+					/**
+					 * Checks if a staff or budget_account code is existing in the budget.
+					 * Only create budget items for existing staff or account codes 
+					 */
 					if($this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->num_rows()>0)
 					 {
+						/**
+						 * Get the value of the staff_code ot budget_account_code of the current 
+						 * looped record
+						 */	
 						$table_code = $this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->row()->$table_code_field;
 						$related_table_primary_key_value = $this->db->get_where($table,array($table_code_field=>$table_code))->row()->$table_primary_key_field;
 						
-						$description = $reviewed_upload['description'][$i];
-						$start_date = $reviewed_upload['start_date'][$i];
-						$end_date = $reviewed_upload['end_date'][$i];
-						$start_month = date("n",strtotime($start_date));
-						$end_month = date("n",strtotime($end_date));
+						/**
+						 * Get the global_key,forecast_period, description, start date ad end date of 
+						 * the current looped record
+						 */
+						$global_key 		= $reviewed_upload['global_key'][$i];
+						$forecast_period 	= $reviewed_upload['forecast_period'][$i];
+						$description 		= $reviewed_upload['description'][$i];
+						$start_date 		= $reviewed_upload['start_date'][$i];
+						$end_date 			= $reviewed_upload['end_date'][$i];
+						
+						/**
+						 * Extract month count of the start and end date as 1,2,3, ... 12
+						 * Eliminates the leading zeros
+						 */
+						$start_month 	= date("n",strtotime($start_date));
+						$end_month 		= date("n",strtotime($end_date));
 		 				
+						/**
+						 * Set the default office_id to 0.
+						 * Checks if the office_code is provided and get the office_id from the office table
+						 * If the budget being uploaded is staff cost then the office_id is obtained from 
+						 * Staff table
+						 */
 						$office_id = 0;
 						
 						if(isset($reviewed_upload['office_code'][$i])){
 		 					$office_id = $this->db->get_where('office',array('office_code'=>$reviewed_upload['office_code'][$i]))->row()->office_id;
-						}else{
+						}elseif($table == 'staff'){
 							$office_id = $this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->row()->office_id;
 						}
 						
-						$header['budget_section_id'] = $budget_section_id;
-						$header['office_code'] = $office_id;
-						$header['related_table_primary_key_value'] 	= $related_table_primary_key_value;
-						$header['description'] = $description;
-						$header['start_date'] 	= $start_date;
-						$header['end_date'] 	= $end_date;
-		 				 
-						$query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
+					
+		 				
+						/**
+						 * 
+						 * Scenario: 
+						 * 
+						 * Start Date: 1/1/2019
+						 * Staff/ Account Code: 202020
+						 * Office Code: 1200
+						 * Budget Section: Staff Cost
+						 * Forecast Period: 0
+						 * Global_Key = 0
+						 * 
+						 * a) Checks if budget line as a global key not equal to zero.
+						 * b) Checks this record in the database if it exists and has the same forecast_period
+						 * 		If yes, it updates the record description, start and end date and month spread
+						 * 		If not, it creates a new record new budget line record
+						 * c) If the budget line has global key equals to 0, create a new budget line and it's
+						 * spread. 
+						 *  
+						 */
+						 
+						 /**
+						  * Old string at enhancement sprint P1.01
+						  * **/
+						 
+						// $query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
+						// related_table_primary_key_value = ".$related_table_primary_key_value." AND 
+						// budget_section_id=".$budget_section_id." AND office_code = ".$office_id." 
+						 // AND description = '".$description."'";
+						 
+						 /**
+						  * You can only use global key for this query string but the additional filters 
+						  * are used just to be sure, the record truely is not existing
+						  * 
+						  * Note: The following values of the uploaded record should match what is in 
+						  * the database to a record to be considered for update (All MUST be fulfilled):
+						  * a) The year of the start date 
+						  * b) Same staff or budget account
+						  * c) Same budget type e.g. staff, thematic
+						  * d) Same office 
+						  * e) Same global key
+						  * f) Same Forecast Period
+						  * 
+						  */
+						 $query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
 						related_table_primary_key_value = ".$related_table_primary_key_value." AND 
 						budget_section_id=".$budget_section_id." AND office_code = ".$office_id." 
-						AND description = '".$description."'";
+						 AND global_key = '".$global_key."' AND forecast_period = '".$forecast_period."'";
+						 
 		 				$this->db->join($table,"$table.$table_primary_key_field=budget.related_table_primary_key_value");
 						$this->db->where($query_string);
 		 				
+						/**
+						 * Check number of rows meeting the filters created above. Insert if not met otherwise update.
+						 */
 						$budget_rows = $this->db->get('budget')->num_rows();
 						
 						if($budget_rows == 0){
 							
+						/**
+						 * Populating the header array to be used to create a record in 
+						 * the budget table
+						 */
+							$header['global_key'] = substr( md5($office_id.'-'.$start_date.'-'.$description."-".rand(1000,2000000) ) , 0,15);
+							$header['forecast_period'] = $forecast_period;
+							$header['budget_section_id'] = $budget_section_id;
+							$header['office_code'] = $office_id;
+							$header['related_table_primary_key_value'] 	= $related_table_primary_key_value;
+							$header['description'] = $description;
+							$header['start_date'] 	= $start_date;
+							$header['end_date'] 	= $end_date;
+							
+							//Insert the table header information in budget table		
 							$this->db->insert("budget",$header);
-		 				
+		 					
+		 					//Get the budget_id of the last inserted record
 							$budget_id = $this->db->insert_id();
 		 					
+							//Loop months spread and insert then budget spread table
 							for($j=1;$j<13;$j++){
 								 $spread['month'] 			= $j;
 								 $spread['budget_id']		= $budget_id;
@@ -846,13 +981,25 @@ class Budget extends CI_Controller
 							$total_affected_records++;
 							
 						}else{
-						  					
+							/**
+							 * Populate updateable headers
+							 */
+							$header['description'] = $description;
+							$header['start_date'] 	= $start_date;
+							$header['end_date'] 	= $end_date;
+							
+							///Update header information
+							$this->db->where($query_string);
+							$this->db->update('budget',$header);
+						  	
+							//Get the budget id based on the created query string				
 							$this->db->where($query_string);
 							$budget_id = $this->db->get('budget')->row()->budget_id;
 		 					
+							//Loop to update update the months spread and insert in budget spread table
 							for($j=$start_month;$j<$end_month+1;$j++){
 								if(isset($reviewed_upload['month_'.$j][$i])){
-									$spread['amount']		= $reviewed_upload['month_'.$j][$i];
+									$spread['amount']		= isset($reviewed_upload['month_'.$j][$i])?$reviewed_upload['month_'.$j][$i]:0;
 									$this->db->where(array('budget_id'=>$budget_id,'month'=>$j));
 									$this->db->update("budget_spread",$spread);	
 								}
@@ -1631,26 +1778,52 @@ class Budget extends CI_Controller
 		echo $this->load->view('backend/budget/bva_updates', $page_data,true);	
 	}	
 	
-	function bva_updates($param1 = "", $param2 = ""){
+	//Get start date of the latest uploaded BVA
+	function get_latest_bva_start_date(){
+		/**
+		 * a) First check if there is any BVA record present by returning count
+		 * b) If a record exist select maximum  update months of the existing records and get 
+		 * row value of update month
+		 * c) Return the row value
+		 * d) If no record is present the results of (a) get the start date of the current year.
+		 * f) Return the results of (c) or (d)
+		 */
+		 
+		 //Returned if there are no BVA records present
+		 
+		 $start_date = date("Y-m-01");
+		 
+		 //Check if there are any bva update records present
+		 $count_of_bva_records = $this->db->get('bva_update')->num_rows();
+		 
+		 if($count_of_bva_records > 0){
+		 	//Get Max update month date and return it's value
+		 	$this->db->select_max('update_month');
+			return $results_of_max_date = $this->db->get('bva_update')->row()->update_month;
+
+		 }
+		 
+		 return $start_date;
+	}
+	
+	function bva_updates($month_start_date = "", $specific_action_trigger = ""){
 		if ($this->session->userdata('user_login') != 1)
            redirect(base_url() . 'login', 'refresh');
 		
-		if($param1 == "") $param1 = strtotime(date('Y-m-01'));
+		//Initiate $month_start_date if not passed. Set it to the date of the last bva update
+		if($month_start_date == "") $month_start_date = $this->get_latest_bva_start_date();		
 		
-		$month_start_date = date('Y-m-01',$param1);
-		
-		if($param2 == 'delete'){
+		if($specific_action_trigger == 'delete'){
 			$this->db->where(array('update_month'=>$month_start_date));
 			$this->db->delete('bva_update');
 			$this->session->set_flashdata('flash_message',get_phrase('records_deleted_successful'));
 			redirect(base_url().'budget/bva_updates','refresh');
 		}
 		
-		$bva_updates = $this->get_month_bva_update_grouped_by_period($month_start_date);//$this->get_month_bva_update($month_start_date);
+		$bva_updates = $this->get_month_bva_update_grouped_by_period($month_start_date);
 		
-		//$page_data['test'] = $this->get_month_bva_update($month_start_date);
 		$page_data['bva_updates'] = $bva_updates; 
-        $page_data['month_epoch'] = $param1;
+        $page_data['month_epoch'] = strtotime($month_start_date);
 		$page_data['view_type']  = "budget";
 		$page_data['page_name']  = __FUNCTION__;
         $page_data['page_title'] = get_phrase(__FUNCTION__);
@@ -1999,13 +2172,16 @@ class Budget extends CI_Controller
 			// $this->db->where(array('budget.office_code'=>$this->session->office_id));	
 		// }
 		
-		$this->db->select(array('budget_section.name','office.name as office_name','month'));
+		$latest_forcast = $this->get_lasted_year_forecast(date('Y',strtotime($start_year_date)));
+		
+		$this->db->select(array('forecast_period','budget_section.name','office.name as office_name','month'));
 		$this->db->select_sum('amount');
 		$this->db->group_by(array('budget.budget_section_id','office.office_code','month'));
 		$this->db->join('budget','budget.budget_id=budget_spread.budget_id');
 		$this->db->join('budget_section','budget_section.budget_section_id=budget.budget_section_id');
 		$this->db->join('office','office.office_id=budget.office_code');
-		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date));
+		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date,
+		"forecast_period"=>$latest_forcast));
 		$records = $this->db->get('budget_spread')->result_array();
 		
 		$budget_grid = array();
@@ -2053,12 +2229,14 @@ class Budget extends CI_Controller
 		}
 		
 		//Budget Per Field Office
+		$latest_forecast_year = $this->get_lasted_year_forecast($alloc_year);
 		$this->db->select(array('office.name as office','budget_section.short_name as budget_type'));
 		$this->db->select_sum('amount');
 		$this->db->join('budget','budget.budget_id=budget_spread.budget_id');
 		$this->db->join('office','office.office_id=budget.office_code');
 		$this->db->join('budget_section','budget_section.budget_section_id = budget.budget_section_id');
-		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date));
+		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date,
+		'forecast_period'=>$latest_forecast_year));
 		$this->db->group_by(array('office.name','budget_section.name'));
 		$budget = $this->db->get('budget_spread')->result_object();
 		
@@ -2071,7 +2249,8 @@ class Budget extends CI_Controller
 		$this->db->join('budget','budget.budget_id=allocation.budget_id');
 		$this->db->join('budget_section','budget_section.budget_section_id = budget.budget_section_id');
 		$this->db->group_by(array('office.name','budget_section.name','alloc_year'));
-		$allocations = $this->db->get_where('allocation',array('alloc_year'=>$alloc_year))->result_object();
+		$allocations = $this->db->get_where('allocation',array('alloc_year'=>$alloc_year,
+		'forecast_period'=>$latest_forecast_year))->result_object();
 		
 		$budget_with_allocation_grid = array();
 		
