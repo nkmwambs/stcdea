@@ -91,7 +91,7 @@ var baseurl = '<?php echo base_url();?>';
 							<i class="entypo-user"></i>
 						</div>
 						
-						<input type="text" class="form-control" name="email" id="email" placeholder="Email" autocomplete="off" data-mask="email" />
+						<input type="text" class="form-control" name="email" id="email" placeholder="Work Email" autocomplete="off" data-mask="email" />
 					</div>
 					
 				</div>
