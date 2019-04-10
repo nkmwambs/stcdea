@@ -148,7 +148,7 @@
         </li>
         
         <!-- MESSAGES -->
-        <li class="<?php if ($page_name == 'messages') echo 'active'; ?> ">
+        <li class="<?=get_access('system_messaging','system');?> <?php if ($page_name == 'messages') echo 'active'; ?> ">
             <a href="<?php echo base_url();?>messages/message">
                 <i class="entypo-mail"></i>
                 <span><?php echo get_phrase('messages'); ?></span>

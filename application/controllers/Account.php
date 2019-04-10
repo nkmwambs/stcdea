@@ -200,9 +200,10 @@ class Account extends CI_Controller
 		/**Select Category Table**/
 		$crud->set_table('profile');
 		
+		
 		/**Set a relationship**/
 		$crud->set_relation_n_n(get_phrase("access"), "access", "entitlement", "profile_id", "entitlement_id", 
-		"name",'',array('entitlement.name<>'=>'system','visibility'=>1));
+		"name",'',array('entitlement.derivative_id<>'=>$this->session->system_access_id));
 		
 		//$crud->set_relation_n_n(get_phrase("access"), "allocate_access", "access", "profile_id", "access_id", "name");
 		//$crud->set_relation_n_n(get_phrase("access"), "allocate_access", "access", "profile_id", "access_id", "name");
@@ -316,7 +317,7 @@ class Account extends CI_Controller
 
   	/** MANEGE USER INFORMATION **/
 
-		public function manage_users(){
+	public function manage_users(){
 		if ($this->session->userdata('user_login') != 1 || 
 		(!in_array(__FUNCTION__, $this->session->privileges) && $this->session->is_super_user != 1)
 		)
@@ -396,8 +397,8 @@ class Account extends CI_Controller
 		$this->db->update('user',$data);
  
    	 	return true;
-	}		
-	
+	}
+		
 	public function reset_user_password(){
 		
 	}

@@ -88,7 +88,8 @@ if(isset($load_budget)){
 					<div class="office_budget_holder_<?=$office_code;?>">
 							<table class="table table-striped datatable">
 									<thead>
-										<tr>
+										<tr class="<?=get_access('allocate_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>"> 
+											
 											<th colspan="16">
 												<a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a>
 											</th>

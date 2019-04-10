@@ -112,7 +112,7 @@ class Email_model extends CI_Model {
 		$this->email->to($to);
 		$this->email->subject($sub);
 		
-		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://www.compassion-africa.org\">&copy; 2018 ".$this->db->get_where('settings' , array('type'=>'system_name'))->row()->description."</a></center>";
+		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://bvamanager.org\">&copy; 2018 ".$this->db->get_where('settings' , array('type'=>'system_name'))->row()->description."</a></center>";
 		$this->email->message($msg);
 		
 		$this->email->send();
