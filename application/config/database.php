@@ -35,11 +35,19 @@
 */
 
 // The following values will probably need to be changed.
+<<<<<<< HEAD
 $db['default']['dsn'] = 'mysql:host=localhost;dbname=stcbva_bvatest';
+=======
+$db['default']['dsn'] = 'mysql:host=localhost;dbname=stchild';
+>>>>>>> 9e88b3b8f4be2c3aeccaabf46f10ce3dce528500
 $db['default']['hostname'] = "localhost";
-$db['default']['username'] = "stcbva_stcdea";
+$db['default']['username'] = "compatl8_root";
 $db['default']['password'] = "@Compassion123";
+<<<<<<< HEAD
 $db['default']['database'] = "stcbva_bvatest";
+=======
+$db['default']['database'] = "stchild";
+>>>>>>> 9e88b3b8f4be2c3aeccaabf46f10ce3dce528500
 
 
 // The following values can probably stay the same.
