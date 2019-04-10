@@ -200,9 +200,10 @@ class Account extends CI_Controller
 		/**Select Category Table**/
 		$crud->set_table('profile');
 		
+		
 		/**Set a relationship**/
 		$crud->set_relation_n_n(get_phrase("access"), "access", "entitlement", "profile_id", "entitlement_id", 
-		"name",'',array('entitlement.name<>'=>'system','visibility'=>1));
+		"name",'',array('entitlement.derivative_id<>'=>$this->session->system_access_id));
 		
 		//$crud->set_relation_n_n(get_phrase("access"), "allocate_access", "access", "profile_id", "access_id", "name");
 		//$crud->set_relation_n_n(get_phrase("access"), "allocate_access", "access", "profile_id", "access_id", "name");
@@ -364,9 +365,14 @@ class Account extends CI_Controller
 		/** Add form fields **/	
 		$crud->add_fields(array("name","gender","email","office_id","role_id","profile_id",'is_super_user'));
 		
+		
+		$crud->field_type('gender','dropdown',array('male'=>'Male','female'=>'Female'));
+		
 		/** Edit form fields **/
 		$crud->edit_fields(array("name","gender","email","office_id","role_id","profile_id","auth",'is_super_user'));		
 		
+		/**Call backs**/
+		$crud->callback_after_insert(array($this,'send_registration_email_notification'));
 		
 		$output = $crud->render();
 		$page_data['view_type']  = "account";
@@ -376,6 +382,23 @@ class Account extends CI_Controller
         $this->load->view('backend/index', $output);
 	}		
 	
+	public function send_registration_email_notification($post_array,$primary_key){
+	 	$this->load->model('Email_model');
+		
+	 	$password = substr(md5(rand(10000, 50000000)),0,8);
+		
+	 	/**Send Email**/
+	 	$this->email_model->account_opening_email($post_array['email'],$password);
+		
+		$data['password'] = md5($password);
+		
+		$this->db->where(array('user_id'=>$primary_key));
+		
+		$this->db->update('user',$data);
+ 
+   	 	return true;
+	}
+		
 	public function reset_user_password(){
 		
 	}

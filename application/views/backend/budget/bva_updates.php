@@ -66,30 +66,34 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     <div class="panel-body" style="overflow: auto;"> -->
                     	
                        <div class="row">
-							<div class="col-xs-12">                 	
+							<!-- <div class="col-xs-12">  -->                	
 		                    	<!-- <a href="<?=base_url();?>Budget/add_bva_update" 
 		                    		class="<?=get_access('add_bva_update','view_BVA_update');?> 
 		                    		btn btn-default"><?=get_phrase('add_bva_update');?> <i class="fa fa-reorder"> </i>
 		                    	</a> -->
 		                    	
-		                    	<a href="<?=base_url();?>Budget/upload_monthly_update/bva_update" 
-		                    		class="btn btn-default"><?=get_phrase('upload_bva_updates');?> 
-		                    		<i class="<?=get_access('add_bva_update','view_BVA_update');?> 
-		                    			fa fa-upload"></i>
-		                    	</a>
+		                    	<div class="<?=get_access('add_bva_update','view_BVA_update');?> col-xs-2">
+		                    		<a href="<?=base_url();?>Budget/upload_monthly_update/bva_update" 
+			                    		class="btn btn-default"><?=get_phrase('upload_bva_updates');?> 
+			                    		<i class="fa fa-upload"></i>
+			                    	</a>
+		                    	</div>
+		                    	
 		                    	<?php
 		                    		if($month_epoch == $current_date){
 		                    	?>
-		                    	<a href="<?=base_url();?>Budget/bva_updates/<?=$month_epoch;?>/delete" 
-		                    		class="btn btn-default"><?=get_phrase('delete_bva_updates');?> 
-		                    		<i class="<?=get_access('delete_bva_update','view_BVA_update');?> 
-		                    			fa fa-trash"></i>
-		                    	</a>
+		                    	<div class="<?=get_access('delete_bva_update','view_BVA_update');?> col-xs-2">
+		                    		<a href="<?=base_url();?>Budget/bva_updates/<?=$month_epoch;?>/delete" 
+			                    		class="btn btn-default"><?=get_phrase('delete_bva_updates');?> 
+			                    		<i class="fa fa-trash"></i>
+			                    	</a>
+		                    	</div>
+		                    	
 		                    	<?php
 									}
 		                    	?>
 		                    	
-	                   		</div>
+	                   		<!-- </div> -->
 	                   	</div> 			
                     	<hr />
                     	

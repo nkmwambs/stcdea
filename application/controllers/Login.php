@@ -71,6 +71,8 @@ class Login extends CI_Controller {
 			$this->session->set_userdata('is_super_user', $row->is_super_user);	
 			$this->session->set_userdata('role_id', $row->role_id);
 			$this->session->set_userdata('office_id', $row->office_id);
+			$this->session->set_userdata('system_access_id',$this->db->get_where('entitlement',
+			array('name'=>'system'))->row()->entitlement_id);
 			
 			$this->db->join('entitlement','entitlement.entitlement_id=access.entitlement_id');
 			$this->db->select(array('entitlement.name as privilege'));
