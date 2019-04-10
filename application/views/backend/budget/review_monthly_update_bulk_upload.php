@@ -1,5 +1,5 @@
 <?php
-//echo $update_type;
+//rint_r($uploaded_data);
 ?>
 
 <div class="row">
@@ -49,7 +49,8 @@
 						</td>
 					
 						<?php 
-							$column_count = 0; foreach($value as $cell_key=>$cell_value):
+							$column_count = 0; 
+							foreach($value as $cell_key=>$cell_value):
 								if($cell_key == 1){
 									$cell_value = date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($cell_value));
 								}

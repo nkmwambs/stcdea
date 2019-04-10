@@ -25,6 +25,9 @@
 	<script src="<?php echo base_url();?>assets/js/neon-custom.js"></script>
 	<script src="<?php echo base_url();?>assets/js/neon-demo.js"></script>
 	
+	<!--Accounting JS-->
+	<script src="<?php echo base_url();?>assets/js/accounting.min.js"></script>
+	
 	<!--Font Awesome-->
 	
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />

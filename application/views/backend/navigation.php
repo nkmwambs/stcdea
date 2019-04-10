@@ -148,7 +148,7 @@
         </li>
         
         <!-- MESSAGES -->
-        <li class="<?php if ($page_name == 'messages') echo 'active'; ?> ">
+        <li class="<?=get_access('system_messaging','system');?> <?php if ($page_name == 'messages') echo 'active'; ?> ">
             <a href="<?php echo base_url();?>messages/message">
                 <i class="entypo-mail"></i>
                 <span><?php echo get_phrase('messages'); ?></span>
@@ -261,7 +261,7 @@
                             </a>
                         </li>
                         
-                        <li class="<?=get_access('setup_account_themes','manage_setup_parameters')?> <?php if ($page_name == 'account_themes') echo 'active'; ?>">
+                        <!-- <li class="<?=get_access('setup_account_themes','manage_setup_parameters')?> <?php if ($page_name == 'account_themes') echo 'active'; ?>">
                         	<a href="<?php echo base_url(); ?>account/account_themes"  class="">
                                     <span><i class="entypo-feather"></i><?php echo get_phrase('account_themes'); ?></span>
                             </a>
@@ -271,7 +271,7 @@
                         	<a href="<?php echo base_url(); ?>account/account_groups"  class="">
                                     <span><i class="entypo-bucket"></i><?php echo get_phrase('account_groups'); ?></span>
                             </a>
-                        </li>
+                        </li> -->
                         
                         <li class="<?=get_access('setup_budget_account','manage_setup_parameters')?> <?php if ($page_name == 'budget_account') echo 'active'; ?>">
                         	<a href="<?php echo base_url(); ?>account/budget_account"  class="">

@@ -1,5 +1,4 @@
 <?php
-//print_r($test);
 
 $current_date = isset($current_month)?$current_month:$month_epoch;
 
@@ -67,30 +66,34 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     <div class="panel-body" style="overflow: auto;"> -->
                     	
                        <div class="row">
-							<div class="col-xs-12">                 	
-		                    	<a href="<?=base_url();?>Budget/add_bva_update" 
+							<!-- <div class="col-xs-12">  -->                	
+		                    	<!-- <a href="<?=base_url();?>Budget/add_bva_update" 
 		                    		class="<?=get_access('add_bva_update','view_BVA_update');?> 
 		                    		btn btn-default"><?=get_phrase('add_bva_update');?> <i class="fa fa-reorder"> </i>
-		                    	</a>
+		                    	</a> -->
 		                    	
-		                    	<a href="<?=base_url();?>Budget/upload_monthly_update/bva_update" 
-		                    		class="btn btn-default"><?=get_phrase('upload_bva_updates');?> 
-		                    		<i class="<?=get_access('add_bva_update','view_BVA_update');?> 
-		                    			fa fa-upload"></i>
-		                    	</a>
+		                    	<div class="<?=get_access('add_bva_update','view_BVA_update');?> col-xs-2">
+		                    		<a href="<?=base_url();?>Budget/upload_monthly_update/bva_update" 
+			                    		class="btn btn-default"><?=get_phrase('upload_bva_updates');?> 
+			                    		<i class="fa fa-upload"></i>
+			                    	</a>
+		                    	</div>
+		                    	
 		                    	<?php
 		                    		if($month_epoch == $current_date){
 		                    	?>
-		                    	<a href="<?=base_url();?>Budget/bva_updates/<?=$month_epoch;?>/delete" 
-		                    		class="btn btn-default"><?=get_phrase('delete_bva_updates');?> 
-		                    		<i class="<?=get_access('delete_bva_update','view_BVA_update');?> 
-		                    			fa fa-trash"></i>
-		                    	</a>
+		                    	<div class="<?=get_access('delete_bva_update','view_BVA_update');?> col-xs-2">
+		                    		<a href="<?=base_url();?>Budget/bva_updates/<?=$month_epoch;?>/delete" 
+			                    		class="btn btn-default"><?=get_phrase('delete_bva_updates');?> 
+			                    		<i class="fa fa-trash"></i>
+			                    	</a>
+		                    	</div>
+		                    	
 		                    	<?php
 									}
 		                    	?>
 		                    	
-	                   		</div>
+	                   		<!-- </div> -->
 	                   	</div> 			
                     	<hr />
                     	
@@ -116,7 +119,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 			                    			<th rowspan="2"><?=get_phrase('office');?></th>
 				                    		<th rowspan="2"><?=get_phrase('SOF_name');?></th>
 				                    		<th rowspan="2"><?=get_phrase('DEA_description');?></th>
-				                    		<th rowspan="2"><?=get_phrase('DEA_initial_amount');?></th>
+				                    		<!-- <th rowspan="2"><?=get_phrase('DEA_initial_amount');?></th> -->
 				                    		<th colspan="4" style="text-align: center;"><?=get_phrase('month');?></th>
 				                    		<th colspan="4" style="text-align: center;"><?=get_phrase('YTD');?></th>
 				                    		<th colspan="2" style="text-align: center;"><?=get_phrase('full_year');?></th>
@@ -152,12 +155,10 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     					?>
                     						<tr>
                     							<!--Description-->	
-                    							<td nowrap="nowrap"><?=$update['description']['office'];?></td>
-                    							<td nowrap="nowrap"><?=$update['description']['sof_code'].': '.$update['description']['sof'];?></td>
-                    							<td nowrap="nowrap"><?=$update['description']['dea_code'].': '.$update['description']['description'];?></td>
+                    							<td nowrap="nowrap"><?=$update['dea_information']['office'];?></td>
+                    							<td><?=$update['dea_information']['sof_code'].': '.$update['dea_information']['sof'];?></td>
+                    							<td><?=$update['dea_information']['dea_code'].': '.$update['dea_information']['description'];?></td>
                     							
-                    							<!--DEA Initial Amount-->
-                    							<td nowrap="nowrap"><?=$update['initial'];?></td>
                     							
                     							<!--Month-->
                     							<td nowrap="nowrap"><?=number_format($update['month']['forecast'],2);?></td>

@@ -6,6 +6,8 @@ array('role_id'=>$this->session->role_id,'restricted_to_object'=>'view_budget'))
 
 if($view_budget_restriction ==  0){
 
+//echo $test;
+
 ?>
 <div class="row">
 	<div class="col-xs-12">
@@ -37,21 +39,25 @@ if($view_budget_restriction ==  0){
 
 <hr>
 
-<?php
-}
-
-if(isset($load_budget)){
-	//echo $load_budget;
-?>
 <div class="<?=get_access('add_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?> row">
 	<div class="col-xs-12">
-		<a href="<?=base_url();?>Budget/add_budget_line" class="btn btn-default"><?=get_phrase("add_bugdet_line");?> <i class="fa fa-plus-circle"></i></a>
+		<!-- <a href="<?=base_url();?>Budget/add_budget_line" class="btn btn-default"><?=get_phrase("add_bugdet_line");?> <i class="fa fa-plus-circle"></i></a>
+		 -->
 		<a href="<?=base_url();?>Budget/upload_budget/<?=$budget_type;?>" class="btn btn-default"><?=get_phrase("upload_budget_worksheet");?> <i class="entypo-upload"></i></a>
 		<a href="#" onclick="javascript:go_back();" class="btn btn-default">Go Back<i class="fa fa-reply"></i></a>
 	</div>
 </div>
 
 <hr class="<?=get_access('add_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>" />
+
+
+<?php
+}
+
+if(isset($load_budget)){
+	//echo $load_budget;
+?>
+
 
 <!-- <div class="row">
 	<div class="col-xs-12">
@@ -82,21 +88,24 @@ if(isset($load_budget)){
 					<div class="office_budget_holder_<?=$office_code;?>">
 							<table class="table table-striped datatable">
 									<thead>
-										<tr>
-											<th colspan="17">
-												<a href="<?php echo base_url("Budget/allocate_dea_spread/".$this->session->office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a>
+										<tr class="<?=get_access('allocate_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>"> 
+											
+											<th colspan="16">
+												<a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a>
 											</th>
 										</tr>
 										<tr>
 											<th colspan="8">
 												<?=get_phrase('office_name')?>: <?=$office_name;?>	
 											</th>
-											<th colspan="9">
+											<th colspan="8">
 												<?=get_phrase('office_code')?>: <?=$this->crud_model->get_field_value("office","office_id",$office_code,"office_code");?>												
 											</th>
 
 										</tr>
 										<tr>
+											<th><?=get_phrase('global_key');?></th>
+											<th><?=get_phrase('forecast_period');?></th>
 											<!--Budget type dependant fields -->
 											<?php
 												foreach($budget_section_fields as $fields){
@@ -118,8 +127,7 @@ if(isset($load_budget)){
 												}
 											?>
 											
-											<th class="<?=get_access('show_'.$budget_type.'_action','view_'.$budget_type.'_budget');?>"><?=get_phrase("action");?></th>
-						
+											
 										</tr>
 									</thead>
 									<tbody>
@@ -128,6 +136,8 @@ if(isset($load_budget)){
 											foreach($data as $budget_id=>$row){
 										?>
 										<tr>
+												<td><?=$row['header']['global_key'];?></td>
+												<td><?=$row['header']['forecast_period'];?></td>
 										<?php		
 												foreach($budget_section_fields as $fields){
 													$table_id = $this->db->get_where('budget',
@@ -164,42 +174,7 @@ if(isset($load_budget)){
 													}
 												?>
 												
-												<td class="<?=get_access('show_'.$budget_type.'_action','view_'.$budget_type.'_budget',0);?>">
-		
-													<div class="btn-group">
-									                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-									                        <?php echo get_phrase('action');?> <span class="caret"></span>
-									                    </button>
-									                    <ul class="dropdown-menu dropdown-default pull-right" role="menu">
-									                   		
-									                   		<li class="<?=get_access('edit_'.$budget_type.'_budget_line','show_'.$budget_type.'_action');?>">
-									                   			<a class="" href="<?=base_url();?>budget/edit_budget_line/<?=$budget_id;?>">
-									                               <i class="fa fa-trash"></i>
-									                               		<?php echo get_phrase('edit_budget_line');?>
-									                             </a>
-									                   		</li>
-									                   		
-									                   		<li class="<?=get_access('edit_'.$budget_type.'_budget_line','show_'.$budget_type.'_action');?> divider"></li>
-									                   		
-									                   		<!-- <li class="<?=get_access('allocate_'.$budget_type.'_DEA','show_'.$budget_type.'_action');?>">
-									                             <a class="" href="<?=base_url();?>budget/allocate_dea/<?=$row->budget_id;?>/<?=strtotime($selected_date);?>">
-									                               <i class="fa fa-cloud-download"></i>
-									                               		<?php echo get_phrase('allocate_DEA');?>
-									                             </a>
-									                        </li>
-									             							                        
-									                         <li class="<?=get_access('allocate_'.$budget_type.'_DEA','show_'.$budget_type.'_action');?> divider"></li>
-									                         -->
-									                        <!-- <li class="<?=get_access('show_'.$budget_type.'_budget_spread','show_'.$budget_type.'_action');?>">
-									                        	<a classs="action" href="#" onclick="showAjaxModal('<?=base_url();?>modal/popup/modal_budget_spread/<?=$budget_id;?>');">
-									                            	<i class="fa fa-list"></i>
-																		<?php echo get_phrase('show_budget_spread');?>
-									                               	</a>
-									                        </li> -->
-									                        
-									                     </ul>
-									                  </div> 
-												</td>
+												
 											</tr>	
 										<?php
 												//$sum_gap +=$gap;

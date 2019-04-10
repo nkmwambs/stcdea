@@ -8,14 +8,17 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                    	<a href="<?=base_url();?>Budget/add_commitment_update" 
+                    	<!-- <a href="<?=base_url();?>Budget/add_commitment_update" 
                     		class="<?=get_access('add_commitments_updates','view_active_commitments');?> 
-                    		btn btn-default"><?=get_phrase('add_commitment');?> <i class="fa fa-reorder"> </i></a>
+                    		btn btn-default"><?=get_phrase('add_commitment');?> <i class="fa fa-reorder"> </i></a> -->
                     	
-                    	<a href="<?=base_url();?>Budget/upload_monthly_update/commitment_update" 
-                    		class="btn btn-default"><?=get_phrase('upload_commitments');?> 
-                    		<i class="<?=get_access('add_commitments_updates','view_active_commitments');?> 
-                    			fa fa-upload"></i></a>
+                    	<div class="row <?=get_access('add_commitments_updates','view_active_commitments');?>">
+                    		<div class="col-xs-12">
+                    			<a href="<?=base_url();?>Budget/upload_monthly_update/commitment_update" 
+		                    		class="btn btn-default"><?=get_phrase('upload_commitments');?> 
+		                    		<i class="fa fa-upload"></i></a>
+                    		</div>
+                    	</div>
                     	<hr />
                     	
                     	<table class="table table-striped table-responsive datatable">

@@ -7,15 +7,15 @@ class Email_model extends CI_Model {
         parent::__construct();
     }
 
-	function account_opening_email($account_type = '' , $email = '')
+	function account_opening_email($email = '',$password = "")
 	{
 		$system_name	=	$this->db->get_where('settings' , array('type' => 'system_name'))->row()->description;
-		$query			=	$this->db->get_where(users , array('email' => $email));	
+		$query			=	$this->db->get_where('user' , array('email' => $email));	
 		
-		$email_msg		=	"Dear ".$query->row()->firstname.",<br />";	
+		$email_msg		=	"Dear ".$query->row()->name.",<br />";	
 		$email_msg		.=	"Welcome to ".$system_name."<br />";
-		$email_msg		.=	"Your account type : ".$account_type."<br />";
-		$email_msg		.=	"Your login password : ".$this->db->get_where("user" , array('email' => $email))->row()->password."<br />";
+		$email_msg		.=	"Your account type : ".$this->db->get_where('role',array('role_id'=>$query->row()->role_id))->row()->name."<br />";
+		$email_msg		.=	"Your login password : ".$password."<br />";
 		$email_msg		.=	"Login Here : ".base_url()."<br />";
 		
 		$email_sub		=	"Account opening email";
@@ -112,7 +112,7 @@ class Email_model extends CI_Model {
 		$this->email->to($to);
 		$this->email->subject($sub);
 		
-		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://www.compassion-africa.org\">&copy; 2018 ".$this->db->get_where('settings' , array('type'=>'system_name'))->row()->description."</a></center>";
+		$msg	=	$msg."<br /><br /><br /><br /><br /><br /><br /><hr /><center><a href=\"https://bvamanager.org\">&copy; 2018 ".$this->db->get_where('settings' , array('type'=>'system_name'))->row()->description."</a></center>";
 		$this->email->message($msg);
 		
 		$this->email->send();

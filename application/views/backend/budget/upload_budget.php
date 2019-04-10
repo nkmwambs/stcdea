@@ -18,7 +18,7 @@
 								<label for="field-1" class="col-sm-3 control-label"><?php echo get_phrase('select_excel_file');?></label>
 								
 								<div class="col-sm-5">
-									 <a id="link_template" href="<?php echo base_url();?>uploads/excel_templates/<?=$budget_type;?>_template.xlsx" target="_blank"
+									 <a id="link_template" href="<?php echo base_url();?>uploads/excel_templates/<?=$budget_type;?>_updated_template.xlsx" target="_blank"
 		                         		class="btn btn-info btn-sm"><i class="entypo-download"></i> Download blank excel template</a>
 		                         	<br /><br />
 		                         		

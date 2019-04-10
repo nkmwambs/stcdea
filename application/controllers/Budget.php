@@ -47,18 +47,21 @@ class Budget extends CI_Controller
 
 		$active_office_id = array_column($offices, 'office_id');		
 		
+		//Get Lasted forecast period
+		$lasted_forecast_period = $this->get_lasted_year_forecast(date('Y',strtotime($start_date)));
+		
 		//Get budget items
 		
-		$this->db->where(array('start_date>='=>$start_date,"end_date<="=>$end_date,"budget_section_id"=>$section_id));
+		$this->db->where(array('forecast_period'=>$lasted_forecast_period,'start_date>='=>$start_date,"end_date<="=>$end_date,"budget_section_id"=>$section_id));
 		if($office_id!=="") $this->db->where(array('office_code'=>$office_id));
 		$this->db->join('budget_spread','budget_spread.budget_id=budget.budget_id');
 		if($section_id == 1){
-			$this->db->select(array('budget.budget_id','budget.budget_section_id','budget.office_code',
+			$this->db->select(array('global_key','forecast_period','budget.budget_id','budget.budget_section_id','budget.office_code',
 			'related_table_primary_key_value','staff_code as item_code','staff.name as item_name','description','start_date','end_date','status',
 			'month','budget_spread.amount'));
 			$this->db->join('staff','staff.staff_id=budget.related_table_primary_key_value');
 		}else{
-			$this->db->select(array('budget.budget_id','budget.budget_section_id','budget.office_code',
+			$this->db->select(array('global_key','forecast_period','budget.budget_id','budget.budget_section_id','budget.office_code',
 			'budget.related_table_primary_key_value','budget_account.budget_account_code as item_code','budget_account.name as item_name',
 			'budget.description','budget.start_date','budget.end_date','budget.status',
 			'budget_spread.month','budget_spread.amount'));
@@ -70,12 +73,13 @@ class Budget extends CI_Controller
 		
 		$cnt = 1;
 		foreach($budget as $row){
-			$grouped[$row->office_code][$row->budget_id]['header'] = array('budget_id'=>$row->budget_id,
-			 "budget_section_id"=>$row->budget_section_id,"office_code"=>$row->office_code,
-			 "related_table_primary_key_value"=>$row->related_table_primary_key_value,
-			 'item_code'=>$row->item_code,'item_name'=>$row->item_name,
-			 "description"=>$row->description,"start_date"=>$row->start_date,"end_date"=>$row->end_date,
-			 "status"=>$row->status);
+			$grouped[$row->office_code][$row->budget_id]['header'] = array('global_key'=>$row->global_key,
+			'forecast_period'=>$row->forecast_period,'budget_id'=>$row->budget_id,
+			"budget_section_id"=>$row->budget_section_id,"office_code"=>$row->office_code,
+			"related_table_primary_key_value"=>$row->related_table_primary_key_value,
+			'item_code'=>$row->item_code,'item_name'=>$row->item_name,
+			"description"=>$row->description,"start_date"=>$row->start_date,"end_date"=>$row->end_date,
+			"status"=>$row->status);
 			
 			$grouped[$row->office_code][$row->budget_id]['spread'][$row->month] = $row->amount;
 			
@@ -128,6 +132,13 @@ class Budget extends CI_Controller
 		return $budgeted_related_table_ids_list;
 	}
 	
+	function get_lasted_year_forecast($year){
+		
+		$this->db->select_max('forecast_period');
+		$this->db->where(array('YEAR(start_date)'=>$year));
+		return $this->db->get_where('budget')->row()->forecast_period;
+	}
+	
 	function view_budget($param1="",$param2=""){
 		if ($this->session->userdata('user_login') != 1 ||
 			(!in_array(__FUNCTION__, $this->session->privileges) && $this->session->is_super_user != 1)
@@ -165,6 +176,8 @@ class Budget extends CI_Controller
 		
 		$budget_section_fields = $this->db->get_where('budget_section_field',
 		array('budget_section_id'=>$budget_section_id))->result_object();
+		
+		//$page_data['test'] = $this->get_lasted_year_forecast($office_id,$budget_section_id,'2019');
 		
 		$page_data['office_id'] = "";
 		
@@ -305,6 +318,7 @@ class Budget extends CI_Controller
 			$rows[$i]['dea_code'] 		= $sof_array['dea_code'][$i];
 			$rows[$i]['description'] 	= $sof_array['description'][$i];
 			$rows[$i]['office_code'] 	= $sof_array['office_code'][$i];
+			$rows[$i]['budget_section_id'] 	= $sof_array['budget_section'][$i];
 			$rows[$i]['dea_amount'] 	= $sof_array['dea_amount'][$i];
 		}
 		
@@ -326,6 +340,7 @@ class Budget extends CI_Controller
 				
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['dea_code'] 	= 	$dea['dea_code'];
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['description'] = 	$dea['description'];
+				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['budget_section_id'] = 	$dea['budget_section_id'];
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['office_code'] = 	$dea['office_code'];
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['dea_amount'] 	= 	$dea['dea_amount'];
 			}
@@ -333,30 +348,50 @@ class Budget extends CI_Controller
 		}
 		
 		foreach($sofs as $sof){
-			
+			if(is_numeric($sof['sof_code'])){
 			$data['sof_code'] = $sof['sof_code'];
 			$data['name'] = $sof['sof_name'];
 			$data['start_date'] = $sof['start_date'];
 			$data['end_date'] = $sof['end_date'];
 			
+			//Check if sof exists
+			$count_of_sofs = $this->db->get_where('sof',array('sof_code'=>$sof['sof_code']));
 			
-			$this->db->insert('sof',$data);
+			$sof_id = 0;
 			
-			$sof_id = $this->db->insert_id();
+			if($count_of_sofs->num_rows() > 0){
+				$sof_id = $count_of_sofs->row()->sof_id;
+				$this->db->where(array('sof_code'=>$sof['sof_code']));
+				$this->db->update('sof',$data);
+			}else{
+				$this->db->insert('sof',$data);
+				$sof_id = $this->db->insert_id();
+			}
+			
+			//$sof_id = $this->db->insert_id();
 			
 			$insert_dea_array = array();
 			
 			foreach($sof['dea'] as $dea){
+				//Check if dea exists
+				$count_dea = $this->db->get_where('dea',array('dea_code'=>$dea['dea_code']));
+				
 				$insert_dea_array['sof_id'] = $sof_id;
 				$insert_dea_array['dea_code'] = $dea['dea_code'];
 				$insert_dea_array['description'] = $dea['description'];
+				$insert_dea_array['budget_section_id'] = $dea['budget_section_id'];
 				$insert_dea_array['office_id'] = $this->db->get_where('office',array('office_code'=>$dea['office_code']))->row()->office_id;
 				$insert_dea_array['initial_amount'] = $dea['dea_amount'];
 				
-				$this->db->insert('dea',$insert_dea_array);
-				//echo json_encode($insert_dea_array);
+				if($count_dea->num_rows() > 0 ){
+					$this->db->where(array('dea_code'=>$dea['dea_code']));
+					$this->db->update('dea',$insert_dea_array);
+				}else{
+					$this->db->insert('dea',$insert_dea_array);
+				}
+				
 			}
-			
+			}
 		}
 		
 		
@@ -402,10 +437,11 @@ class Budget extends CI_Controller
         $this->load->view('backend/index', $output);
 	}
 	
-	function add_allocation_to_account_staff_record($accounts,$year){
+	function add_allocation_to_account_staff_record($accounts,$year,$office_id = ""){
 		
-		$this->db->select(array('budget_id','dea_id','amount'));
-		$allocations_for_the_year = $this->db->get_where('allocation',array('alloc_year'=>$year));
+		$this->db->select(array('budget_id','allocation.dea_id','amount'));
+		$this->db->join('dea','dea.dea_id = allocation.dea_id');
+		$allocations_for_the_year = $this->db->get_where('allocation',array('alloc_year'=>$year,'dea.office_id'=>$office_id));
 		
 		$accounts_with_dea = array();
 		
@@ -482,6 +518,7 @@ class Budget extends CI_Controller
 		/**
 		 * This code is a repeat to allocate_dea method
 		 */
+		//$first_day_of_the_year_epoch = strtotime(date('Y-m-01')); 
 		$budget_section = $this->db->get_where('budget_section',array('short_name'=>$budget_type))->row();		
 		
 		$section_id = $budget_section->budget_section_id;
@@ -491,8 +528,12 @@ class Budget extends CI_Controller
 		$first_day_of_the_year = date('Y-m-01',strtotime('first day of january',$first_day_of_the_year_epoch));
 		$last_day_of_the_year = date('Y-m-t',strtotime('last day of december',$first_day_of_the_year_epoch));
  		
+		$latest_forecast = $this->get_lasted_year_forecast(date('Y',$first_day_of_the_year_epoch));
+		
 		$where_string = "start_date >= '".$first_day_of_the_year."' AND 
-		end_date <= '".$last_day_of_the_year."' AND budget_section_id = ".$section_id;
+		end_date <= '".$last_day_of_the_year."' AND budget_section_id = ".$section_id." 
+		AND forecast_period = ".$latest_forecast;
+		
 		
 		$this->db->where($where_string);
 		$this->db->select(array($table.'_id',$table.'.name',$table.'_code','budget.office_code',
@@ -503,11 +544,12 @@ class Budget extends CI_Controller
 		$this->db->group_by('budget_spread.budget_id');
 		$account = $this->db->get_where($table,array('budget.office_code'=>$office_id))
 		->result_object();
-		
+ 		
+		//$page_data['testing'] = $account;
  		
 		$year = date('Y',$first_day_of_the_year_epoch);
  		
-		$records = $this->add_allocation_to_account_staff_record($account,$year);
+		$records = $this->add_allocation_to_account_staff_record($account,$year,$office_id);
 		 
 		$active_deas = $this->group_active_deas_by_sof($first_day_of_the_year_epoch,$office_id, $section_id);
 		
@@ -517,21 +559,9 @@ class Budget extends CI_Controller
 			$is_same_year = 1;
 		}	
 		
-		/**
-		 * This code is a repeat to allocate_dea method
-		 */
-		 
-		
-		$bva_update = $this->get_month_actual($first_day_of_the_year);	
-		$get_dea_grand_allocation = $this->get_dea_grand_allocation(date('Y',$first_day_of_the_year_epoch));
-		$month_expense =  $this->get_month_expenses($first_day_of_the_year);
-		
-		
-		$page_data['bva_update'] = $this->get_month_bva_update(date('Y-m-01'));
-		
-		$page_data['month_expense'] = $month_expense;
-		$page_data['grand_allocation'] = $get_dea_grand_allocation;
-		$page_data['month_actual'] = $bva_update;
+	
+		$page_data['bva_update'] = $this->get_month_bva_update($this->get_latest_bva_start_date(),$office_id,$section_id);
+		$page_data['latest_bva_update'] = $this->get_latest_bva_start_date();
 		$page_data['office_id'] = $office_id;
 		$page_data['table'] = $table; 
 		$page_data['records'] = $records;
@@ -726,17 +756,17 @@ class Budget extends CI_Controller
 
   		if ($param1 == 'import_excel')
   		{			
-  			move_uploaded_file($_FILES['userfile']['tmp_name'], 'uploads/excel/'.$template.'_template.xlsx');
+  			move_uploaded_file($_FILES['userfile']['tmp_name'], 'uploads/excel/'.$template.'_update_template.xlsx');
   			
   			include 'Simplexlsx.class.php';
 			//include APPPATH.'controllers/Simplexlsx.class.php';
 
-  			$xlsx = new SimpleXLSX('uploads/excel/'.$template.'_template.xlsx');
+  			$xlsx = new SimpleXLSX('uploads/excel/'.$template.'_update_template.xlsx');
 
   			//list($num_cols, $num_rows) = $xlsx->dimension();
-			
+			unlink('uploads/excel/'.$template.'_update_template.xlsx');	
   		}
-		
+				
 		$page_data['budget_type'] = $template;
 		//$page_data['budget_section'] = $this->input->post('budget_section_id');
 		$page_data['uploaded_data'] = $xlsx->rows();
@@ -749,81 +779,200 @@ class Budget extends CI_Controller
   	}
 
 	function upload_reviewed_data($param1=""){
+		//Assign the posted grid to a variable	
 		$reviewed_upload = $this->input->post();
 		
+		//A holder of header information
 		$header = array();
 		
+		//A holder of month's spread dat
 		$spread = array();
 		
+		//Count of created records initialized
 		$count_created = 0;
 		
+		//Count of update records initialized
 		$count_updated = 0;
 		
+		//Total number of affected records i.e. created or updated
 		$total_affected_records = 0;
 		
+		/**
+		 * Budget type item code e.g. for staff cost budget this is staff_code (Corresponds to staff_code in the staff table), 
+		 * thematic/ non thematic cost is budget_account_code (Corresponds to budget_account_code of the budget_account table)		 
+		 * */
 		$table_code_field = "";
 		
+		//Primary key of the of the staff or budget_account of the record being uploaded.
 		$table_primary_key_field = "";
 		
-		for($i=0;$i<sizeof($reviewed_upload['month_1']);$i++){
-			
-			$table = $this->db->get_where('budget_section',array('short_name'=>$param1))
-			 ->row()->related_table;
-			 
-			 $budget_section_id = $this->db->get_where('budget_section',array('short_name'=>$param1))
+		/** 
+		 * Intended to get the name of the table holding the units of the budget e.g. Units can be 
+		 * staff or budget_account. The variable below return staff or budget_account
+		 * */
+		$table = $this->db->get_where('budget_section',array('short_name'=>$param1))
+		 ->row()->related_table;
+		
+		/**
+		 * Get the budget_section_id of the budget type from the budget_section table.
+		 * It returns 1 for staff cost budget, 2 for themaic cost and 3 for non thematic cost budget
+		 */
+		  
+		$budget_section_id = $this->db->get_where('budget_section',array('short_name'=>$param1))
 			 ->row()->budget_section_id;
  			
-			$table_code_field = $table."_code";
+		/**
+		 * This equals the field name that has the code of the unit 
+		 * e.g. staff_code or budget_account_code 
+		 */
+		
+		$table_code_field = $table."_code";
+		
+		/**
+		 * Gives the primary key field name of the budget units table. Can either be staff_id or
+		 * budget_account_id
+		 */
 			
-			$table_primary_key_field = $table."_id";
+		$table_primary_key_field = $table."_id";
+		
+		/**
+		 * Get the size of the records to be uploaded. 
+		 * Note outer keys of the post array are the headers of the review grid. Each has a size equaling
+		 * to the number of rows in the grid. The choice of month 1 is a coincidence but all column name
+		 * ca be used.
+		 * **/
+		 
+		for($i=0;$i<sizeof($reviewed_upload['month_1']);$i++){
  			
 			if(isset($reviewed_upload[$table.'_code'][$i])){
-			
+					/**
+					 * Checks if a staff or budget_account code is existing in the budget.
+					 * Only create budget items for existing staff or account codes 
+					 */
 					if($this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->num_rows()>0)
 					 {
+						/**
+						 * Get the value of the staff_code ot budget_account_code of the current 
+						 * looped record
+						 */	
 						$table_code = $this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->row()->$table_code_field;
 						$related_table_primary_key_value = $this->db->get_where($table,array($table_code_field=>$table_code))->row()->$table_primary_key_field;
 						
-						$description = $reviewed_upload['description'][$i];
-						$start_date = $reviewed_upload['start_date'][$i];
-						$end_date = $reviewed_upload['end_date'][$i];
-						$start_month = date("n",strtotime($start_date));
-						$end_month = date("n",strtotime($end_date));
+						/**
+						 * Get the global_key,forecast_period, description, start date ad end date of 
+						 * the current looped record
+						 */
+						$global_key 		= $reviewed_upload['global_key'][$i];
+						$forecast_period 	= $reviewed_upload['forecast_period'][$i];
+						$description 		= $reviewed_upload['description'][$i];
+						$start_date 		= $reviewed_upload['start_date'][$i];
+						$end_date 			= $reviewed_upload['end_date'][$i];
+						
+						/**
+						 * Extract month count of the start and end date as 1,2,3, ... 12
+						 * Eliminates the leading zeros
+						 */
+						$start_month 	= date("n",strtotime($start_date));
+						$end_month 		= date("n",strtotime($end_date));
 		 				
+						/**
+						 * Set the default office_id to 0.
+						 * Checks if the office_code is provided and get the office_id from the office table
+						 * If the budget being uploaded is staff cost then the office_id is obtained from 
+						 * Staff table
+						 */
 						$office_id = 0;
 						
 						if(isset($reviewed_upload['office_code'][$i])){
 		 					$office_id = $this->db->get_where('office',array('office_code'=>$reviewed_upload['office_code'][$i]))->row()->office_id;
-						}else{
+						}elseif($table == 'staff'){
 							$office_id = $this->db->get_where($table,array($table.'_code'=>$reviewed_upload[$table.'_code'][$i]))->row()->office_id;
 						}
 						
-						$header['budget_section_id'] = $budget_section_id;
-						$header['office_code'] = $office_id;
-						$header['related_table_primary_key_value'] 	= $related_table_primary_key_value;
-						$header['description'] = $description;
-						$header['start_date'] 	= $start_date;
-						$header['end_date'] 	= $end_date;
-		 				 
-						$query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
+					
+		 				
+						/**
+						 * 
+						 * Scenario: 
+						 * 
+						 * Start Date: 1/1/2019
+						 * Staff/ Account Code: 202020
+						 * Office Code: 1200
+						 * Budget Section: Staff Cost
+						 * Forecast Period: 0
+						 * Global_Key = 0
+						 * 
+						 * a) Checks if budget line as a global key not equal to zero.
+						 * b) Checks this record in the database if it exists and has the same forecast_period
+						 * 		If yes, it updates the record description, start and end date and month spread
+						 * 		If not, it creates a new record new budget line record
+						 * c) If the budget line has global key equals to 0, create a new budget line and it's
+						 * spread. 
+						 *  
+						 */
+						 
+						 /**
+						  * Old string at enhancement sprint P1.01
+						  * **/
+						 
+						// $query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
+						// related_table_primary_key_value = ".$related_table_primary_key_value." AND 
+						// budget_section_id=".$budget_section_id." AND office_code = ".$office_id." 
+						 // AND description = '".$description."'";
+						 
+						 /**
+						  * You can only use global key for this query string but the additional filters 
+						  * are used just to be sure, the record truely is not existing
+						  * 
+						  * Note: The following values of the uploaded record should match what is in 
+						  * the database to a record to be considered for update (All MUST be fulfilled):
+						  * a) The year of the start date 
+						  * b) Same staff or budget account
+						  * c) Same budget type e.g. staff, thematic
+						  * d) Same office 
+						  * e) Same global key
+						  * f) Same Forecast Period
+						  * 
+						  */
+						 $query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
 						related_table_primary_key_value = ".$related_table_primary_key_value." AND 
 						budget_section_id=".$budget_section_id." AND office_code = ".$office_id." 
-						AND description = '".$description."'";
+						 AND global_key = '".$global_key."' AND forecast_period = '".$forecast_period."'";
+						 
 		 				$this->db->join($table,"$table.$table_primary_key_field=budget.related_table_primary_key_value");
 						$this->db->where($query_string);
 		 				
+						/**
+						 * Check number of rows meeting the filters created above. Insert if not met otherwise update.
+						 */
 						$budget_rows = $this->db->get('budget')->num_rows();
 						
 						if($budget_rows == 0){
 							
+						/**
+						 * Populating the header array to be used to create a record in 
+						 * the budget table
+						 */
+							$header['global_key'] = substr( md5($office_id.'-'.$start_date.'-'.$description."-".rand(1000,2000000) ) , 0,15);
+							$header['forecast_period'] = $forecast_period;
+							$header['budget_section_id'] = $budget_section_id;
+							$header['office_code'] = $office_id;
+							$header['related_table_primary_key_value'] 	= $related_table_primary_key_value;
+							$header['description'] = $description;
+							$header['start_date'] 	= $start_date;
+							$header['end_date'] 	= $end_date;
+							
+							//Insert the table header information in budget table		
 							$this->db->insert("budget",$header);
-		 				
+		 					
+		 					//Get the budget_id of the last inserted record
 							$budget_id = $this->db->insert_id();
 		 					
+							//Loop months spread and insert then budget spread table
 							for($j=1;$j<13;$j++){
 								 $spread['month'] 			= $j;
 								 $spread['budget_id']		= $budget_id;
-								 $spread['amount']		= $reviewed_upload['month_'.$j][$i];
+								 $spread['amount']			= isset($reviewed_upload['month_'.$j][$i])?$reviewed_upload['month_'.$j][$i]:0;
 		 						
 								 $this->db->insert("budget_spread",$spread);
 							}
@@ -832,13 +981,25 @@ class Budget extends CI_Controller
 							$total_affected_records++;
 							
 						}else{
-						  					
+							/**
+							 * Populate updateable headers
+							 */
+							$header['description'] = $description;
+							$header['start_date'] 	= $start_date;
+							$header['end_date'] 	= $end_date;
+							
+							///Update header information
+							$this->db->where($query_string);
+							$this->db->update('budget',$header);
+						  	
+							//Get the budget id based on the created query string				
 							$this->db->where($query_string);
 							$budget_id = $this->db->get('budget')->row()->budget_id;
 		 					
+							//Loop to update update the months spread and insert in budget spread table
 							for($j=$start_month;$j<$end_month+1;$j++){
 								if(isset($reviewed_upload['month_'.$j][$i])){
-									$spread['amount']		= $reviewed_upload['month_'.$j][$i];
+									$spread['amount']		= isset($reviewed_upload['month_'.$j][$i])?$reviewed_upload['month_'.$j][$i]:0;
 									$this->db->where(array('budget_id'=>$budget_id,'month'=>$j));
 									$this->db->update("budget_spread",$spread);	
 								}
@@ -1094,17 +1255,17 @@ class Budget extends CI_Controller
 		$this->load->view('backend/index', $page_data);	
 	}
 	
-	function group_active_deas_by_sof($param1 = "",$param2="", $budget_section_id=""){
+	function group_active_deas_by_sof($start_date = "",$office_id="", $budget_section_id=""){
 
-		$year_start_date = date('Y-m-01',strtotime('first day of january',$param1));
-		$year_end_date = date('Y-m-t',strtotime('last day of december',$param1));
+		$year_start_date = date('Y-m-01',strtotime('first day of january',$start_date));
+		$year_end_date = date('Y-m-t',strtotime('last day of december',$start_date));
 		
 		$this->db->join('sof','sof.sof_id=dea.sof_id'); 
 		$this->db->join('office','office.office_id=dea.office_id');
 		$this->db->select(array('dea.dea_id','dea.description','office.name as office','sof.sof_code','sof.name as sof',
 		'dea.dea_code'));
-		if($param2!=""){
-			$this->db->where(array('dea.office_id'=>$param2));
+		if($office_id!=""){
+			$this->db->where(array('dea.office_id'=>$office_id));
 		}
 		
 		if($budget_section_id!=""){
@@ -1342,120 +1503,260 @@ class Budget extends CI_Controller
 
 	
 
-	function get_month_bva_update($month_start_date){
+	function get_month_bva_update($month_start_date,$office_id="", $budget_section_id=""){
 		
+		
+		/**YTD Actuals for the year grouped by dea**/
 		$where_string = "update_month <='".$month_start_date."'";
+		if($office_id != "") $where_string .= " AND office_id = ".$office_id." AND budget_section_id = ".$budget_section_id;
 		$where_string .= " AND update_month >= '".date('Y-m-01',strtotime('first day of january',strtotime($month_start_date)))."'";
+		$this->db->select(array('bva_update.dea_id'));
 		$this->db->select('SUM(bva_update.month_actual) as ytd_actual');
 		$this->db->group_by('bva_update.dea_id');
 		$this->db->where($where_string);
+		$this->db->join('dea','dea.dea_id = bva_update.dea_id');
 		$ytd_actual = $this->db->get('bva_update')->result_array();
 		
-		//Calculate LOA actual
+		$ytd_actual_amount = array_column($ytd_actual, 'ytd_actual');
+		$ytd_actual_dea = array_column($ytd_actual, 'dea_id');
+		$dea_keyed_ytd_actual = array_combine($ytd_actual_dea,$ytd_actual_amount);
+			
+		/**Get Past LOA Actuals from dea initial amount table**/
+		$this->db->select(array('dea_id','initial_amount'));
+		if($office_id != "") $this->db->where(array('office_id'=>$office_id,'budget_section_id'=>$budget_section_id));
+		$past_loa_actual = $this->db->get('dea')->result_array();
+		
+		$past_loa_actual_amount = array_column($past_loa_actual, 'initial_amount');
+		$past_loa_actual_dea = array_column($past_loa_actual, 'dea_id');
+		$dea_keyed_past_loa_actual = array_combine($past_loa_actual_dea,$past_loa_actual_amount);
+				
+		/**LOA Actuals for the year grouped by dea**/
 		$where_string = "update_month <='".$month_start_date."'";
+		if($office_id != "") $where_string .= " AND office_id = ".$office_id." AND budget_section_id = ".$budget_section_id;
 		$this->db->select('SUM(bva_update.month_actual) as loa_actual');
+		$this->db->select(array('bva_update.dea_id'));
 		$this->db->group_by('bva_update.dea_id');
 		$this->db->where($where_string);
+		$this->db->join('dea','dea.dea_id = bva_update.dea_id');
 		$loa_actual = $this->db->get('bva_update')->result_array();
 		
-		//Calculate Expense for the month
+		$loa_actual_amount = array_column($loa_actual, 'loa_actual');
+		$loa_actual_dea = array_column($loa_actual, 'dea_id');
+		$dea_keyed_loa_actual = array_combine($loa_actual_dea, $loa_actual_amount);
+ 		
+		/**Calculate Expense for the month**/
+		$this->db->select('expense.dea_id');
 		$this->db->select_sum('amount');
-		$this->db->select('dea_id');
-		$this->db->group_by('dea_id');
+		$this->db->where(array('month>='=>$month_start_date,'month<='=>date('Y-m-t',strtotime($month_start_date))));
+		if($office_id != "")  $this->db->where(array('office_id'=>$office_id,'budget_section_id'=>$budget_section_id));
+		$this->db->group_by('expense.dea_id');
+		$this->db->join('dea','dea.dea_id = expense.dea_id');
 		$month_expense = $this->db->get('expense')->result_array();
+		
 		
 		$expense_amount = array_column($month_expense, 'amount');
 		$expense_dea = array_column($month_expense, 'dea_id');
-		$expense = array_combine($expense_dea, $expense_amount);
+		$dea_keyed_expense = array_combine($expense_dea, $expense_amount);
 		
-		//Calculate Commitment for the month
+	
+		/**Calculate Commitment for the month**/
+		$this->db->select('commitment.dea_id');
 		$this->db->select_sum('amount');
-		$this->db->select('dea_id');
-		$this->db->group_by('dea_id');
+		if($office_id != "")  $this->db->where(array('office_id'=>$office_id,'budget_section_id'=>$budget_section_id));
+		$this->db->group_by('commitment.dea_id');
+		$this->db->join('dea','dea.dea_id = commitment.dea_id');
 		$month_commitment = $this->db->get('commitment')->result_array();
 		
 		$commitment_amount = array_column($month_commitment, 'amount');
 		$commitment_dea = array_column($month_commitment, 'dea_id');
-		$commitment = array_combine($commitment_dea, $commitment_amount);
-				
+		$dea_keyed_commitment = array_combine($commitment_dea, $commitment_amount);
 		
-		$this->db->where(array('update_month'=>$month_start_date));		
+		/**Budget Allocated ammount**/
+		$latest_forecast = $this->get_lasted_year_forecast(date('Y',strtotime($month_start_date)));
+		$where_string = "alloc_year = YEAR('".$month_start_date."') AND forecast_period = ".$latest_forecast;
+		$this->db->select_sum('amount');
+		$this->db->select('allocation.dea_id');
+		$this->db->join('dea','dea.dea_id = allocation.dea_id');
+		$this->db->join('budget','budget.budget_id=allocation.budget_id');	
+		if($office_id != "")  $this->db->where(array('dea.office_id'=>$office_id,'dea.budget_section_id'=>$budget_section_id));
+		$this->db->where($where_string);
+		$this->db->group_by('allocation.dea_id');
+		$allocation = $this->db->get('allocation')->result_array();
+		
+		$allocation_amount = array_column($allocation, 'amount');
+		$allocation_dea = array_column($allocation, 'dea_id');
+		$dea_keyed_allocation = array_combine($allocation_dea, $allocation_amount);
+		
+		
+		//Form a combined array for YTD Actuals, Past LOA Actuals, LOA Actuals, Expense and Commitment
+		$combined_array = array();
+		$combined_array['ytd_actuals'] = $dea_keyed_ytd_actual;
+		$combined_array['initial_loa_actuals'] = $dea_keyed_past_loa_actual;
+		$combined_array['loa_actuals'] = $dea_keyed_loa_actual;
+		$combined_array['expenses'] = $dea_keyed_expense;
+		$combined_array['commitments'] = $dea_keyed_commitment;
+		$combined_array['ytd_allocations'] = $dea_keyed_allocation;
+				
+		/**Current month BVA Update**/
+		
+		// $this->db->select(array('bva_update_id','description','office.name as office','sof.sof_code',
+		// 'sof.name as sof','dea.dea_code','dea.dea_id','bva_update.update_month','bva_update.month_actual',
+		// 'month_forecast','ytd_forecast','year_forecast','loa_forecast','dea.initial_amount'));
+		
+		$this->db->select(array('dea.dea_id','bva_update.update_month','bva_update.month_actual',
+		'month_forecast','ytd_forecast','year_forecast','loa_forecast'));
+		
+		$this->db->where(array('update_month'=>$month_start_date));
+		if($office_id != "")  $this->db->where(array('dea.office_id'=>$office_id,
+		'budget_section_id'=>$budget_section_id));		
+		if($office_id != "")  $this->db->where(array('dea.office_id'=>$office_id,'budget_section_id'=>$budget_section_id));
 		$this->db->join('dea','dea.dea_id=bva_update.dea_id'); 
 		$this->db->join('sof','sof.sof_id=dea.sof_id'); 
-		$this->db->join('office','office.office_id=dea.office_id');
-		//$this->db->join('expense','expense.dea_id=dea.dea_id','left outer');   
-		$this->db->select(array('bva_update_id','description','office.name as office','sof.sof_code',
-		'sof.name as sof','dea.dea_code','dea.dea_id','bva_update.update_month','bva_update.month_actual',
-		'month_forecast','ytd_forecast','year_forecast','loa_forecast','dea.initial_amount'));
-        $bva_updates = $this->db->get('bva_update')->result_object(); 
+		$this->db->join('office','office.office_id=dea.office_id'); 
 		
-		$bva_updates_with_ytd_actual = array();
+        $bva_updates = $this->db->get('bva_update')->result_array(); 
 		
-		$i = 0;
-		foreach($bva_updates as $row){
-			$row->ytd_actual = isset($ytd_actual[$i]['ytd_actual'])?$ytd_actual[$i]['ytd_actual']:0;
-			$row->loa_actual = $loa_actual[$i]['loa_actual'];
-			
-			$row->month_expense = isset($expense[$row->dea_id])?$expense[$row->dea_id]:0;
-			$row->month_commitment = isset($commitment[$row->dea_id])?$commitment[$row->dea_id]:0;
-			
-			$bva_updates_with_ytd_actual[$i] = $row;
-			$i++;
+		//Construct month actual, month forecast, ytd forecast, year forecast, loa forecast a
+		
+		if(count($bva_updates) > 0){
+			foreach(array_keys($bva_updates[0]) as $column){
+	
+				if($column == 'dea_id' || $column == 'update_month') continue;
+				
+				$amount = array_column($bva_updates, $column);
+				$dea = array_column($bva_updates, 'dea_id');
+				$dea_keyed = array_combine($dea, $amount);
+				
+				$combined_array[$column] = $dea_keyed;
+			}
 		}
 		
-		return $bva_updates_with_ytd_actual;
+		
+		//Compute DEA Balance array
+		$dea_keyed_loa_dea_balance = array();
+		foreach(array_keys($dea_keyed_past_loa_actual) as $dea_id){
+			$loa_forecast = isset($combined_array['loa_forecast'][$dea_id])?$combined_array['loa_forecast'][$dea_id]:0;
+			$initial_loa_actuals = isset($dea_keyed_past_loa_actual[$dea_id])?$dea_keyed_past_loa_actual[$dea_id]:0;
+			$loa_actuals = isset($dea_keyed_loa_actual[$dea_id])?$dea_keyed_loa_actual[$dea_id]:0;
+			$sum_of_loa_actuals = $initial_loa_actuals + $loa_actuals;
+			$dea_keyed_loa_dea_balance[$dea_id] = $loa_forecast - $sum_of_loa_actuals;
+		}
+
+		$combined_array['loa_dea_balance'] = $dea_keyed_loa_dea_balance;
+		
+		return $combined_array;
+		 	
 	}
 
-	function get_month_bva_update_grouped_by_period($month_start_date){
+	function get_month_bva_update_grouped_by_period($month_start_date,$office_id="",$budget_section_id=""){
 		
-		$ungrouped_bva_update = $this->get_month_bva_update($month_start_date);
+		$month_bva_update = $this->get_month_bva_update($month_start_date);
 		
-		$grouped_bva_update = array();
+		/**Check we there is a bva_update**/
+		$bva_records_count = $this->db->get_where('bva_update',array('update_month'=>$month_start_date))->num_rows();
 		
-		$i = 0;
-		foreach($ungrouped_bva_update as $row){
+		/**Get all DEAs**/
+		$this->db->select(array('office.name as office','sof.name as sof','sof_code','dea_code','dea_id','dea.description'));
+		$this->db->join('sof','sof.sof_id=dea.sof_id');
+		$this->db->join('office','office.office_id=dea.office_id');
+		$deas_with_sof_and_office_information = $this->db->get('dea')->result_array();
+		
+		//Append month bva update to sof information
+		
+		$deas_with_sof_and_office_information_and_bva_month_updates = array();
+		
+		$loop = 0;
+		foreach($deas_with_sof_and_office_information as $row){
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['dea_information'] = $row;
 			
-			$expense_and_commitment_of_the_month = $row->month_expense +  $row->month_commitment;
-			$month_expense_to_date = $row->month_actual + $expense_and_commitment_of_the_month;
-			$ytd_to_date = $row->ytd_actual + $expense_and_commitment_of_the_month;
-			$loa_to_date = $row->loa_actual + $expense_and_commitment_of_the_month;
+			$month_expenses = isset($month_bva_update['expenses'][$row['dea_id']])?$month_bva_update['expenses'][$row['dea_id']]:0;
+			$month_commitments = isset($month_bva_update['commitments'][$row['dea_id']])?$month_bva_update['commitments'][$row['dea_id']]:0;
 			
-			$grouped_bva_update[$i]['description'] = array(
-				'bva_update_id'=>$row->bva_update_id,
-				'description'=>$row->description,
-				'office'=>$row->office,
-				'sof_code'=>$row->sof_code,
-				'sof'=>$row->sof,
-				'dea_code'=>$row->dea_code,
-				'dea_id'=>$row->dea_id,
-				'update_month'=>$row->update_month);
-				
-			$grouped_bva_update[$i]['initial'] = $row->initial_amount;
-			$grouped_bva_update[$i]['month'] = array(
-				'forecast'=>$row->month_forecast,
-				'actual'=>$month_expense_to_date,
-				'variance'=>$row->month_forecast - $month_expense_to_date,
-				'per_variance'=>($row->month_forecast - $month_expense_to_date)/$row->month_forecast);
-				
-			$grouped_bva_update[$i]['ytd'] = array(
-				'forecast'=>$row->ytd_forecast,
-				'actual'=>$ytd_to_date,
-				'variance'=>$row->ytd_forecast - $ytd_to_date,
-				'per_variance'=>($row->ytd_forecast - $ytd_to_date)/$row->ytd_forecast);	
-				
-			$grouped_bva_update[$i]['full_year'] = array(
-				'forecast'=>$row->year_forecast,
-				'burn_rate'=>$row->ytd_actual/$row->year_forecast);	
-				
-			$grouped_bva_update[$i]['loa'] = array(
-				'forecast'=>$row->loa_forecast,
-				'actual'=>$loa_to_date,
-				'burn_rate'=>$loa_to_date/$row->loa_forecast);
+			$expense_and_commitment_sum = $month_expenses + $month_commitments;
 			
-			$i++;			
+			$month_actuals = $expense_and_commitment_sum + isset($month_bva_update['month_actual'][$row['dea_id']]) && isset($month_bva_update['month_actual'])?$month_bva_update['month_actual'][$row['dea_id']]:0;
+			$month_forecast = isset($month_bva_update['month_forecast'][$row['dea_id']])?$month_bva_update['month_forecast'][$row['dea_id']]:0;
+			$month_variance = $month_forecast - $month_actuals;
+			$month_per_variance = ($month_forecast != 0)?($month_variance/$month_forecast):0;
+				
+			$ytd_forecast = isset($month_bva_update['ytd_forecast'][$row['dea_id']])?$month_bva_update['ytd_forecast'][$row['dea_id']]:0;
+			$ytd_actuals = $expense_and_commitment_sum + isset($month_bva_update['ytd_actuals'][$row['dea_id']]) && $bva_records_count > 0?$month_bva_update['ytd_actuals'][$row['dea_id']]:0;
+			$ytd_variance = $ytd_forecast - $ytd_actuals;
+			$ytd_per_variance = ($ytd_forecast != 0)?($ytd_variance/$ytd_forecast):0;
+
+			$year_forecast = isset($month_bva_update['year_forecast'][$row['dea_id']])?$month_bva_update['year_forecast'][$row['dea_id']]:0;
+			$year_burn_rate = $year_forecast != 0?$ytd_actuals/$year_forecast:0;
+			
+			$loa_forecast = isset($month_bva_update['loa_forecast'][$row['dea_id']])?$month_bva_update['loa_forecast'][$row['dea_id']]:0;	
+			$loa_actuals = $expense_and_commitment_sum + isset($month_bva_update['loa_actuals'][$row['dea_id']])  && $bva_records_count > 0?$month_bva_update['loa_actuals'][$row['dea_id']]:0;	
+			$loa_burn_rate = $loa_forecast != 0?$loa_actuals/$loa_forecast:0;
+									
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['month']['forecast'] = $month_forecast;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['month']['actual'] = $month_actuals;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['month']['variance'] = $month_variance;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['month']['per_variance'] = $month_per_variance;
+			
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['forecast'] = $ytd_forecast;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['actual'] = $ytd_actuals;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['variance'] = $ytd_variance;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['per_variance'] = $ytd_per_variance;
+			
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['full_year']['forecast'] = $year_forecast;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['full_year']['burn_rate'] = $year_burn_rate;
+			
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['loa']['forecast'] = $loa_forecast;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['loa']['actual'] = $loa_actuals;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['loa']['burn_rate'] = $loa_burn_rate;
+			
+			$loop++;
 		}
 		
-		return $grouped_bva_update;
+		return $deas_with_sof_and_office_information_and_bva_month_updates;
+		
+		// $i = 0;
+		// foreach($ungrouped_bva_update as $row){
+// 			
+			// $expense_and_commitment_of_the_month = $row->month_expense +  $row->month_commitment;
+			// $month_expense_to_date = $row->month_actual + $expense_and_commitment_of_the_month;
+			// $ytd_to_date = $row->ytd_actual + $expense_and_commitment_of_the_month;
+			// $loa_to_date = $row->loa_actual + $expense_and_commitment_of_the_month;
+// 			
+			// $grouped_bva_update[$i]['description'] = array(
+				// 'bva_update_id'=>$row->bva_update_id,
+				// 'description'=>$row->description,
+				// 'office'=>$row->office,
+				// 'sof_code'=>$row->sof_code,
+				// 'sof'=>$row->sof,
+				// 'dea_code'=>$row->dea_code,
+				// 'dea_id'=>$row->dea_id,
+				// 'update_month'=>$row->update_month);
+// 				
+			// $grouped_bva_update[$i]['initial'] = $row->initial_amount;
+			// $grouped_bva_update[$i]['month'] = array(
+				// 'forecast'=>$row->month_forecast,
+				// 'actual'=>$month_expense_to_date,
+				// 'variance'=>$row->month_forecast - $month_expense_to_date,
+				// 'per_variance'=>($row->month_forecast - $month_expense_to_date)/$row->month_forecast);
+// 				
+			// $grouped_bva_update[$i]['ytd'] = array(
+				// 'forecast'=>$row->ytd_forecast,
+				// 'actual'=>$ytd_to_date,
+				// 'variance'=>$row->ytd_forecast - $ytd_to_date,
+				// 'per_variance'=>($row->ytd_forecast - $ytd_to_date)/$row->ytd_forecast);	
+// 				
+			// $grouped_bva_update[$i]['full_year'] = array(
+				// 'forecast'=>$row->year_forecast,
+				// 'burn_rate'=>$row->ytd_actual/$row->year_forecast);	
+// 				
+			// $grouped_bva_update[$i]['loa'] = array(
+				// 'forecast'=>$row->loa_forecast,
+				// 'actual'=>$loa_to_date,
+				// 'burn_rate'=>$loa_to_date/$row->loa_forecast);
+// 			
+			// $i++;			
+		// }
+// 		
+		//return $grouped_bva_update;
 	}
 	
 	function bva_updates_scroll($param1 = "",$scroll_to = ""){
@@ -1480,26 +1781,52 @@ class Budget extends CI_Controller
 		echo $this->load->view('backend/budget/bva_updates', $page_data,true);	
 	}	
 	
-	function bva_updates($param1 = "", $param2 = ""){
+	//Get start date of the latest uploaded BVA
+	function get_latest_bva_start_date(){
+		/**
+		 * a) First check if there is any BVA record present by returning count
+		 * b) If a record exist select maximum  update months of the existing records and get 
+		 * row value of update month
+		 * c) Return the row value
+		 * d) If no record is present the results of (a) get the start date of the current year.
+		 * f) Return the results of (c) or (d)
+		 */
+		 
+		 //Returned if there are no BVA records present
+		 
+		 $start_date = date("Y-m-01");
+		 
+		 //Check if there are any bva update records present
+		 $count_of_bva_records = $this->db->get('bva_update')->num_rows();
+		 
+		 if($count_of_bva_records > 0){
+		 	//Get Max update month date and return it's value
+		 	$this->db->select_max('update_month');
+			return $results_of_max_date = $this->db->get('bva_update')->row()->update_month;
+
+		 }
+		 
+		 return $start_date;
+	}
+	
+	function bva_updates($month_start_date = "", $specific_action_trigger = ""){
 		if ($this->session->userdata('user_login') != 1)
            redirect(base_url() . 'login', 'refresh');
 		
-		if($param1 == "") $param1 = strtotime(date('Y-m-01'));
+		//Initiate $month_start_date if not passed. Set it to the date of the last bva update
+		if($month_start_date == "") $month_start_date = $this->get_latest_bva_start_date();		
 		
-		$month_start_date = date('Y-m-01',$param1);
-		
-		if($param2 == 'delete'){
+		if($specific_action_trigger == 'delete'){
 			$this->db->where(array('update_month'=>$month_start_date));
 			$this->db->delete('bva_update');
 			$this->session->set_flashdata('flash_message',get_phrase('records_deleted_successful'));
 			redirect(base_url().'budget/bva_updates','refresh');
 		}
 		
-		$bva_updates = $this->get_month_bva_update_grouped_by_period($month_start_date);//$this->get_month_bva_update($month_start_date);
+		$bva_updates = $this->get_month_bva_update_grouped_by_period($month_start_date);
 		
-		//$page_data['test'] = $this->get_month_bva_update($month_start_date);
 		$page_data['bva_updates'] = $bva_updates; 
-        $page_data['month_epoch'] = $param1;
+        $page_data['month_epoch'] = strtotime($month_start_date);
 		$page_data['view_type']  = "budget";
 		$page_data['page_name']  = __FUNCTION__;
         $page_data['page_title'] = get_phrase(__FUNCTION__);
@@ -1587,7 +1914,7 @@ class Budget extends CI_Controller
   			include 'Simplexlsx.class.php';
 			//include APPPATH.'controllers/Simplexlsx.class.php';
 
-  			$xlsx = new SimpleXLSX('uploads/'.$template.'.xlsx');
+  			$xlsx = new SimpleXLSX('uploads/excel/'.$template.'_template.xlsx');
 
   			//list($num_cols, $num_rows) = $xlsx->dimension();
 			
@@ -1617,8 +1944,12 @@ class Budget extends CI_Controller
 				$field_value = $reviewed_upload[$field][$i];
 				if($field == 'dea_code') {
 					$field_name = 'dea_id';
-					$field_value = $this->db->get_where('dea',array('dea_code'=>$reviewed_upload[$field][$i]))
-						->row()->dea_id;
+					$field_value_obj = $this->db->get_where('dea',array('dea_code'=>$reviewed_upload[$field][$i]));
+					if($field_value_obj->num_rows()>0){
+						$field_value = $field_value_obj->row()->dea_id;
+					}else{
+						$field_value = 0;
+					}
 				}
 				$data[$i][$field_name] = $field_value;
 			}
@@ -1844,13 +2175,16 @@ class Budget extends CI_Controller
 			// $this->db->where(array('budget.office_code'=>$this->session->office_id));	
 		// }
 		
-		$this->db->select(array('budget_section.name','office.name as office_name','month'));
+		$latest_forcast = $this->get_lasted_year_forecast(date('Y',strtotime($start_year_date)));
+		
+		$this->db->select(array('forecast_period','budget_section.name','office.name as office_name','month'));
 		$this->db->select_sum('amount');
 		$this->db->group_by(array('budget.budget_section_id','office.office_code','month'));
 		$this->db->join('budget','budget.budget_id=budget_spread.budget_id');
 		$this->db->join('budget_section','budget_section.budget_section_id=budget.budget_section_id');
 		$this->db->join('office','office.office_id=budget.office_code');
-		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date));
+		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date,
+		"forecast_period"=>$latest_forcast));
 		$records = $this->db->get('budget_spread')->result_array();
 		
 		$budget_grid = array();
@@ -1860,10 +2194,10 @@ class Budget extends CI_Controller
 			$budget_grid[$row['name']][$row['office_name']][$row['month']] = $row['amount'];
 		}
 		
-		foreach($records as $row){
-			$budget_grid[$row['name']][$row['office_name']]['total'] = array_sum($budget_grid[$row['name']][$row['office_name']]);
-		}
-		
+		// foreach($records as $row){
+			// $budget_grid[$row['name']][$row['office_name']]['total'] = array_sum($budget_grid[$row['name']][$row['office_name']]);
+		// }
+// 		
 		
 		$page_data['start_year_date'] = strtotime($start_year_date);
 		$page_data['records'] = $budget_grid;
@@ -1898,12 +2232,14 @@ class Budget extends CI_Controller
 		}
 		
 		//Budget Per Field Office
+		$latest_forecast_year = $this->get_lasted_year_forecast($alloc_year);
 		$this->db->select(array('office.name as office','budget_section.short_name as budget_type'));
 		$this->db->select_sum('amount');
 		$this->db->join('budget','budget.budget_id=budget_spread.budget_id');
 		$this->db->join('office','office.office_id=budget.office_code');
 		$this->db->join('budget_section','budget_section.budget_section_id = budget.budget_section_id');
-		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date));
+		$this->db->where(array('start_date>='=>$start_year_date,'end_date<='=>$end_year_date,
+		'forecast_period'=>$latest_forecast_year));
 		$this->db->group_by(array('office.name','budget_section.name'));
 		$budget = $this->db->get('budget_spread')->result_object();
 		
@@ -1916,7 +2252,8 @@ class Budget extends CI_Controller
 		$this->db->join('budget','budget.budget_id=allocation.budget_id');
 		$this->db->join('budget_section','budget_section.budget_section_id = budget.budget_section_id');
 		$this->db->group_by(array('office.name','budget_section.name','alloc_year'));
-		$allocations = $this->db->get_where('allocation',array('alloc_year'=>$alloc_year))->result_object();
+		$allocations = $this->db->get_where('allocation',array('alloc_year'=>$alloc_year,
+		'forecast_period'=>$latest_forecast_year))->result_object();
 		
 		$budget_with_allocation_grid = array();
 		

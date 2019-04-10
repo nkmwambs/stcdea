@@ -14,11 +14,15 @@
                     	<!-- <a href="<?=base_url();?>Budget/add_expense_update" 
                     		class="<?=get_access('add_expense_update','view_expense_update');?> 
                     		btn btn-default"><?=get_phrase('add_expense');?> <i class="fa fa-reorder"> </i></a> -->
+                    	<div class="row <?=get_access('add_expense_update','view_expense_update');?>">
+                    		<div class="col-xs-12">
+                    			<a href="<?=base_url();?>Budget/upload_monthly_update/expense_update" 
+		                    		class="btn btn-default">
+		                    			<?=get_phrase('upload_expenses');?> 
+		                    		<i class="fa fa-upload"></i></a>
+                    		</div>
+                    	</div>
                     	
-                    	<a href="<?=base_url();?>Budget/upload_monthly_update/expense_update" 
-                    		class="btn btn-default"><?=get_phrase('upload_expenses');?> 
-                    		<i class="<?=get_access('add_expense_update','view_expense_update');?> 
-                    			fa fa-upload"></i></a>
                     	<hr />
                     	
                     	<table class="table table-striped table-responsive datatable">

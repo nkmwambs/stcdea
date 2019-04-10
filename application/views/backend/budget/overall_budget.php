@@ -38,19 +38,22 @@
                     	</thead>
                     	<tbody>
                     		<?php
+                    			
                     			foreach($records as $bugdet_type=>$field_offices){
                     		?>
                     			<tr>
                     				<td><i style="cursor: pointer;" id="<?=strtolower(str_replace(" ", "_", $bugdet_type));?>" 
                     					class="fa fa-eye-slash show_hide_field_row"></i> <?=$bugdet_type;?></td>
                     				<?php
+                    					$total = 0;
                     					for($i=1;$i<13;$i++){
+                    						$total += array_sum(array_column($field_offices, $i));
                     				?>
                     					<td style="text-align: right;"><?php echo number_format(array_sum(array_column($field_offices, $i)),2);?></td>
                     				<?php
 										}
                     				?>
-                    				<td style="text-align: right;"><?php echo number_format(array_sum(array_column($field_offices, 'total')),2);?></td>
+                    				<td style="text-align: right;"><?php echo number_format($total,2);?></td>
                     			</tr>
                     			<tr class="field_office_row" style="display: none;" id="row_<?=strtolower(str_replace(" ", "_", $bugdet_type));?>">
                     				<td colspan="14">
@@ -72,17 +75,21 @@
 	                    					</thead>
 	                    					<tbody>
 	                    		<?php
+	                    				
 	                    				foreach($field_offices as $field_office=>$month){
 	                    		?>
 	                    					<tr>
 	                    						<td><?=$field_office;?></td>
 	                    						<?php
+	                    							$office_total = 0;
 	                    							foreach($month as $amount){
+	                    								$office_total += $amount;
 	                    						?>
 	                    							<td style="text-align: right;"><?=number_format($amount,2);?></td>
 	                    						<?php
 													}
 	                    						?>
+	                    						<td><?=number_format($office_total,2);?></td>
 	                    					</tr>
 	                    		<?php		
 	                    				}
