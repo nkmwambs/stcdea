@@ -1,8 +1,10 @@
 <?php
 ini_set('memory_limit', '1024M');
 
-$view_budget_restriction = $this->db->get_where('field_restriction',
-array('role_id'=>$this->session->role_id,'restricted_to_object'=>'view_budget'))->num_rows();
+// $view_budget_restriction = $this->db->get_where('field_restriction',
+// array('role_id'=>$this->session->role_id,'restricted_to_object'=>'view_budget'))->num_rows();
+
+$view_budget_restriction = 0;
 
 if($view_budget_restriction ==  0){
 

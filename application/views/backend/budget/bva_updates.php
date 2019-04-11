@@ -1,5 +1,7 @@
 <?php
 
+//print_r($this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office'));
+
 $current_date = isset($current_month)?$current_month:$month_epoch;
 
 ?>

@@ -584,43 +584,72 @@ class Account extends CI_Controller
 	function restriction(){
 		if ($this->session->userdata('user_login') != 1)
             redirect(base_url() . 'login', 'refresh');
-
-		/**Instatiate CRUD**/
-		$crud = new grocery_CRUD();
-
-		/**Set theme to flexigrid**/
-		$crud->set_theme('flexigrid');//flexigrid
 		
-		$crud->unset_bootstrap();
-		$crud->unset_jquery();
-		$crud->unset_jquery_ui();
-
-		/** Grid Subject **/
-		$crud->set_subject(get_phrase('restriction'));
-
-		/**Select Category Table**/
-		$crud->set_table('field_restriction');
+		$results = array();
+		$raw_results = $this->stcdea_model->user_restriction_objects('restriction_object_name');
 		
-		/** Relate to Budget themes **/
-		$crud->set_relation('role_id', 'role', 'name');
+		foreach($raw_results as $object=>$values){
+			$results[$object] = group_array_by_key($values,'name',array('user_id'));
+		}
 		
-		/**Dropdown for restriction objects**/
-		$crud->field_type("restricted_to_object", "dropdown",array("view_budget"=>get_phrase("view_budget")));
-		
-		/**Fields to show**/
-			
-		$crud->columns(array('role_id','restricted_to_object'));
-		$crud->fields(array('role_id','restricted_to_object'));
-		
-		/** User friendly field labels **/
-		$crud->display_as(array('role_id'=>get_phrase('role')));
-			
-		$output = $crud->render();
+		$page_data['results'] = $results;
 		$page_data['view_type']  = "account";
 		$page_data['page_name']  = __FUNCTION__;
         $page_data['page_title'] = get_phrase(__FUNCTION__);
-		$output = array_merge($page_data,(array)$output);
-        $this->load->view('backend/index', $output);
+        $this->load->view('backend/index', $page_data);
+	}
+	
+	function list_restriction_values($object){
+		
+		$object_name = $this->db->get_where('restriction_object',
+		array('restriction_object_id'=>$object))->row()->restriction_object_name;
+		//$load_data['object'] = $object_name;
+		$results = $this->db->get($object_name)->result_object();
+		//$this->load->view('backend/account/ajax_list_restriction_values/',$load_data,true);
+		$string = "";
+		
+		foreach($results as $result){
+			$id = $object_name."_id";
+			$string .="<option value='".$result->$id."'>".$result->name."</option>";
+		}
+		
+		echo $string;
+		
+	}
+	
+	function restricted_users($object){
+		
+		$object_name = $this->db->get_where('restriction_object',
+		array('restriction_object_id'=>$object))->row()->restriction_object_name;
+
+		$results_query = "SELECT * FROM user WHERE user_id NOT IN (SELECT user_id FROM user_restriction WHERE restriction_object_id = ".$object.")"; 	
+		
+		$results = $this->db->query($results_query)->result_object();
+			
+		$string = "";
+		
+		foreach($results as $result){
+			$id = $object_name."_id";
+			$string .="<option value='".$result->$id."'>".$result->name."</option>";
+		}
+		
+		echo $string;
+		
+	}	
+	
+	function add_user_restriction(){
+		if ($this->session->userdata('user_login') != 1)
+            redirect(base_url() . 'login', 'refresh');
+		
+		
+		 
+		$this->db->select(array('user_id','name'));
+		$page_data['users'] = $this->db->get('user')->result_object();
+		$page_data['objects'] = $this->db->get('restriction_object')->result_object();
+		$page_data['view_type']  = "account";
+		$page_data['page_name']  = __FUNCTION__;
+        $page_data['page_title'] = get_phrase(__FUNCTION__);
+        $this->load->view('backend/index', $page_data);
 	}
 
 	function upload_setup($param1=""){

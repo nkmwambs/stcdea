@@ -138,6 +138,9 @@ class Budget extends CI_Controller
 		$this->db->where(array('YEAR(start_date)'=>$year));
 		return $this->db->get_where('budget')->row()->forecast_period;
 	}
+
+	
+
 	
 	function view_budget($param1="",$param2=""){
 		if ($this->session->userdata('user_login') != 1 ||
@@ -148,8 +151,10 @@ class Budget extends CI_Controller
 		$selected_date = strtotime($param2);
 		
 		//Check if logged user has field office budget access restriction
-		$check_restriction = $this->db->get_where('field_restriction',
-		array('restricted_to_object'=>'view_budget','role_id'=>$this->session->role_id))->num_rows();
+		// $check_restriction = $this->db->get_where('field_restriction',
+		// array('restricted_to_object'=>'view_budget','role_id'=>$this->session->role_id))->num_rows();
+		
+		
 		
 		$office_id =  "";
 		
@@ -157,10 +162,10 @@ class Budget extends CI_Controller
 			$office_id = $_POST['office_id'];
 		}
 		
-		if($check_restriction > 0){
-			$office_id = $this->session->office_id;	
-			$page_data['load_budget'] = true;
-		}
+		// if($check_restriction > 0){
+			// $office_id = $this->session->office_id;	
+			// $page_data['load_budget'] = true;
+		// }
 		
 		if($param2=="") $selected_date = strtotime(date('Y-m-d'));	
 				
@@ -185,7 +190,17 @@ class Budget extends CI_Controller
 			$page_data['office_id'] = $_POST['office_id'];
 			$page_data['load_budget'] = true;
 		}
-		$page_data['offices'] = $this->db->select(array('office_id','office_code','name'))->get_where('office',array('status'=>1))->result_object();
+		
+		//Get user restriction by office
+		$office_ids = $this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office');
+		
+		$this->db->where('office.status',1);
+		
+		if(count($office_ids) > 0) $this->db->where_in('office_id',$office_ids);
+		
+		$offices =  $this->db->select(array('office_id','office_code','name'))->get('office')->result_object();
+		
+		$page_data['offices'] = $offices;
 		$page_data['selected_date'] = $date;
 		$page_data['budget_type'] = $param1;
 		$page_data['budget_section_fields'] = $budget_section_fields;		
@@ -1632,7 +1647,7 @@ class Budget extends CI_Controller
 		}
 		
 		
-		//Compute DEA Balance array
+		//Compute LOA DEA Balance array
 		$dea_keyed_loa_dea_balance = array();
 		foreach(array_keys($dea_keyed_past_loa_actual) as $dea_id){
 			$loa_forecast = isset($combined_array['loa_forecast'][$dea_id])?$combined_array['loa_forecast'][$dea_id]:0;
@@ -1643,6 +1658,20 @@ class Budget extends CI_Controller
 		}
 
 		$combined_array['loa_dea_balance'] = $dea_keyed_loa_dea_balance;
+		
+		
+		//Compute Full Year DEA Balance array
+		$dea_keyed_year_dea_balance = array();
+		foreach(array_keys($dea_keyed_past_loa_actual) as $dea_id){
+			$year_forecast = isset($combined_array['year_forecast'][$dea_id])?$combined_array['year_forecast'][$dea_id]:0;
+			//$initial_loa_actuals = isset($dea_keyed_past_loa_actual[$dea_id])?$dea_keyed_past_loa_actual[$dea_id]:0;
+			$year_actuals = isset($dea_keyed_ytd_actual[$dea_id])?$dea_keyed_ytd_actual[$dea_id]:0;
+			//$sum_of_loa_actuals = $initial_loa_actuals + $loa_actuals;
+			$dea_keyed_year_dea_balance[$dea_id] = $year_forecast - $year_actuals;
+		}
+
+		$combined_array['year_dea_balance'] = $dea_keyed_year_dea_balance;
+				
 		
 		return $combined_array;
 		 	
@@ -1655,8 +1684,16 @@ class Budget extends CI_Controller
 		/**Check we there is a bva_update**/
 		$bva_records_count = $this->db->get_where('bva_update',array('update_month'=>$month_start_date))->num_rows();
 		
+		//Check user restriction by sof and office
+		$office = $this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office');
+		$sof = $this->stcdea_model->get_restricted_objects($this->session->login_user_id,'sof');
+		
 		/**Get all DEAs**/
-		$this->db->select(array('office.name as office','sof.name as sof','sof_code','dea_code','dea_id','dea.description'));
+		$this->db->select(array('office.name as office','sof.name as sof','sof.sof_code','dea.dea_code','dea.dea_id','dea.description'));
+		
+		if(count($office)> 0 ) $this->db->where_in('dea.office_id',$office);
+		if(count($sof)> 0 ) $this->db->where_in('sof.sof_id',$sof);
+		
 		$this->db->join('sof','sof.sof_id=dea.sof_id');
 		$this->db->join('office','office.office_id=dea.office_id');
 		$deas_with_sof_and_office_information = $this->db->get('dea')->result_array();
@@ -2224,12 +2261,12 @@ class Budget extends CI_Controller
 		$alloc_year = date('Y',strtotime($start_year_date));
 		
 		
-		$check_restriction = $this->db->get_where('field_restriction',
-		array('restricted_to_object'=>'view_budget','role_id'=>$this->session->role_id))->num_rows();
+		// $check_restriction = $this->db->get_where('field_restriction',
+		// array('restricted_to_object'=>'view_budget','role_id'=>$this->session->role_id))->num_rows();
 		
-		if($check_restriction > 0){
-			$this->db->where(array('budget.office_code'=>$this->session->office_id));	
-		}
+		// if($check_restriction > 0){
+			// $this->db->where(array('budget.office_code'=>$this->session->office_id));	
+		// }
 		
 		//Budget Per Field Office
 		$latest_forecast_year = $this->get_lasted_year_forecast($alloc_year);

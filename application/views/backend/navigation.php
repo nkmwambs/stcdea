@@ -255,9 +255,9 @@
                             </a>
                         </li>
                         
-                        <li class="<?=get_access('setup_restriction','manage_setup_parameters')?> <?php if ($page_name == 'restriction') echo 'active'; ?>">
+                        <li class="<?=get_access('view_user_restriction','manage_setup_parameters')?> <?php if ($page_name == 'restriction') echo 'active'; ?>">
                         	<a href="<?php echo base_url(); ?>account/restriction"  class="">
-                                    <span><i class="entypo-lock"></i><?php echo get_phrase('field_restrictions'); ?></span>
+                                    <span><i class="entypo-lock"></i><?php echo get_phrase('user_restrictions'); ?></span>
                             </a>
                         </li>
                         
