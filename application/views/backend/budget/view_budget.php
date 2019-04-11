@@ -99,7 +99,7 @@ if(isset($load_budget)){
 												<span class="<?=get_access('delete_'.$budget_type.'_forecast','view_'.$budget_type.'_budget');?>">
 													
 													<?php
-														echo form_open(base_url()."budget/delete_budget_forecast/".$office_id, array('class' => 'form-vertical form-groups-bordered validate','enctype' => 'multipart/form-data'));
+														echo form_open(base_url()."budget/delete_budget_forecast/".$office_id.'/'.$budget_type, array('class' => 'form-vertical form-groups-bordered validate','enctype' => 'multipart/form-data'));
 														//echo $office_id;
 													?>
 													

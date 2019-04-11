@@ -177,6 +177,11 @@ class Budget extends CI_Controller
 			$page_data['load_budget'] = true;
 		}
 		
+		if($param1 == 'after_delete'){
+			$page_data['office_id'] = $param2;
+			$page_data['load_budget'] = true;
+		}
+		
 		//Get user restriction by office
 		$office_ids = $this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office');
 		
@@ -204,7 +209,7 @@ class Budget extends CI_Controller
 		$this->load->view('backend/index', $page_data);
 	}
 	
-	function delete_budget_forecast($office_id=""){
+	function delete_budget_forecast($office_id="",$budget_type = ""){
 		
 		$start = $this->input->post('start');
 		$end = $this->input->post('end');
@@ -229,7 +234,7 @@ class Budget extends CI_Controller
 		}
 		$this->session->set_flashdata('flash_message',$msg);
 		
-		redirect(base_url().'budget/view_budget','refresh');
+		redirect(base_url().'budget/view_budget/'.$budget_type.'/'.$office_id,'refresh');
 	}
 	
 	function view_budget_scroll($param1="",$param2="",$param3=""){
