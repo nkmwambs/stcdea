@@ -143,29 +143,17 @@ class Budget extends CI_Controller
 
 	
 	function view_budget($param1="",$param2=""){
-		if ($this->session->userdata('user_login') != 1 ||
-			(!in_array(__FUNCTION__, $this->session->privileges) && $this->session->is_super_user != 1)
-		)
+		if ($this->session->userdata('user_login') != 1)
             redirect(base_url() . 'login', 'refresh');
 		
 		$selected_date = strtotime($param2);
-		
-		//Check if logged user has field office budget access restriction
-		// $check_restriction = $this->db->get_where('field_restriction',
-		// array('restricted_to_object'=>'view_budget','role_id'=>$this->session->role_id))->num_rows();
-		
-		
-		
+				
 		$office_id =  "";
 		
 		if(isset($_POST['office_id'])) {
 			$office_id = $_POST['office_id'];
 		}
 		
-		// if($check_restriction > 0){
-			// $office_id = $this->session->office_id;	
-			// $page_data['load_budget'] = true;
-		// }
 		
 		if($param2=="") $selected_date = strtotime(date('Y-m-d'));	
 				
@@ -181,8 +169,6 @@ class Budget extends CI_Controller
 		
 		$budget_section_fields = $this->db->get_where('budget_section_field',
 		array('budget_section_id'=>$budget_section_id))->result_object();
-		
-		//$page_data['test'] = $this->get_lasted_year_forecast($office_id,$budget_section_id,'2019');
 		
 		$page_data['office_id'] = "";
 		
@@ -200,6 +186,9 @@ class Budget extends CI_Controller
 		
 		$offices =  $this->db->select(array('office_id','office_code','name'))->get('office')->result_object();
 		
+		$page_data['period_start_date'] = $period_start_date;
+		$page_data['period_end_date'] = $period_end_date;
+		$page_data['forecast'] = $this->get_lasted_year_forecast(date('Y',strtotime($date)));
 		$page_data['offices'] = $offices;
 		$page_data['selected_date'] = $date;
 		$page_data['budget_type'] = $param1;
@@ -215,6 +204,33 @@ class Budget extends CI_Controller
 		$this->load->view('backend/index', $page_data);
 	}
 	
+	function delete_budget_forecast($office_id=""){
+		
+		$start = $this->input->post('start');
+		$end = $this->input->post('end');
+		$forecast = $this->input->post('forecast');
+		
+		//Delete spread
+		$this->db->select(array('budget_id'));
+		$this->db->where(array('start_date>='=>$start,
+		'end_date<='=>$end,'forecast_period'=>$forecast,'office_code'=>$office_id));
+		$budget_lines = $this->db->get('budget')->result_array();
+		
+		$ids = array_column($budget_lines, 'budget_id');
+		
+		$this->db->where_in('budget_id',$ids);
+		$this->db->delete(array('budget_spread','budget'));
+
+		
+		$msg = "No record deleted!";
+		
+		if($this->db->affected_rows() > 0){
+			$msg = "Forecast deleted successful";
+		}
+		$this->session->set_flashdata('flash_message',$msg);
+		
+		redirect(base_url().'budget/view_budget','refresh');
+	}
 	
 	function view_budget_scroll($param1="",$param2="",$param3=""){
 

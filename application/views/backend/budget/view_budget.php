@@ -90,11 +90,50 @@ if(isset($load_budget)){
 					<div class="office_budget_holder_<?=$office_code;?>">
 							<table class="table table-striped datatable">
 									<thead>
-										<tr class="<?=get_access('allocate_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>"> 
+										<tr class=""> 
 											
-											<th colspan="16">
-												<a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a>
+											<th colspan="3">
+												<span class="<?=get_access('allocate_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>"><a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a></span>
 											</th>
+											<th colspan="13" style="border-left: 2px solid gray;">
+												<span class="<?=get_access('delete_'.$budget_type.'_forecast','view_'.$budget_type.'_budget');?>">
+													
+													<?php
+														echo form_open(base_url()."budget/delete_budget_forecast/".$office_id, array('class' => 'form-vertical form-groups-bordered validate','enctype' => 'multipart/form-data'));
+														//echo $office_id;
+													?>
+													
+													<div class="form-group">
+														<div class="col-xs-2">
+															<input type="text" name="start" class="form-control datepicker" value="<?=$period_start_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
+														</div>
+														<div class="col-xs-2">
+															<input type="text" name="end" class="form-control datepicker" value="<?=$period_end_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
+														</div>
+														<div class="col-xs-2">
+															<?php
+																$range = range(0,4);
+															?>
+															<select class="form-control" name="forecast">
+																<?php
+																	foreach($range as $row){
+																?>
+																	<option value="<?=$row;?>" <?php if($forecast == $row) echo "selected";?>>Forecast <?=$row;?></option>
+																<?php
+																	}
+																?>
+																																
+															</select>
+														</div>
+														<div class="col-xs-2">
+															<button type="submit" id="delForecast" class="btn btn-default">Delete Forecast</button>
+														</div>
+													</div>
+													<!-- <a href="<?=base_url();?>budget/delete_budget_forecast/<?=strtotime($period_start_date)?>/<?=strtotime($period_end_date)?>/<?=$forecast;?>/<?=$office_id;?>" class="btn btn-default">Delete Forecast</a> -->
+													</form>
+												</span>
+											</th>
+											
 										</tr>
 										<tr>
 											<th colspan="8">
@@ -271,6 +310,16 @@ if(isset($load_budget)){
 	
 	var spinner = $("#spinner" ).inputSpinner();
 	
-
+	$("#delForecast").on('click',function(){
+		
+		var cnfrm = confirm('Are you sure you want to delete this forecast?');
+		
+		if(!cnfrm){
+			alert('Process Aborted!');
+			return false;
+		}
+		
+		
+	});
 	
 </script>
