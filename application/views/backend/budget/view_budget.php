@@ -259,7 +259,18 @@ if(isset($load_budget)){
 	$(document).ready(function(){
 	
 		$("th, td").attr('nowrap','nowrap');
-	
+		
+		$("#delForecast").on('click',function(){
+		
+			var cnfrm = confirm('Are you sure you want to delete this forecast?');
+			
+			if(!cnfrm){
+				alert('Process Aborted!');
+				return false;
+			}
+			
+			
+		});
 	});
 	
 	$(".scroll_month").on('click',function(){

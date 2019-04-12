@@ -195,10 +195,9 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 			<tfoot>
 				
 				<?php
-					//print_r($bva_update);
-					
-					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
-					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (A)','ytd_actuals'=>'YTD Actual (B)','year_dea_balance'=>'YTD DEA Balance (C = A - B)');					
+					//$budget_item = get_phrase('all')." ".ucwords(str_replace("_", " ",$table)).' '.get_phrase('cost').' '.get_phrase('DEA_allocation');
+					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'loa_forecast'=>'LOA Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
+										
 					$row_spread_value = 0;
 					foreach($total_row_titles as $key=>$row){
 				?>
