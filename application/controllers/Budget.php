@@ -903,6 +903,10 @@ class Budget extends CI_Controller
 						$description 		= $reviewed_upload['description'][$i];
 						$start_date 		= $reviewed_upload['start_date'][$i];
 						$end_date 			= $reviewed_upload['end_date'][$i];
+						$createdby			= $this->session->login_user_id;
+						$lastmodifiedby		= $this->session->login_user_id;
+						$createddate		= date('Y-m-d h:i:s');
+						$lastmodifieddate	= date('Y-m-d h:i:s');
 						
 						/**
 						 * Extract month count of the start and end date as 1,2,3, ... 12
@@ -989,14 +993,18 @@ class Budget extends CI_Controller
 						 * Populating the header array to be used to create a record in 
 						 * the budget table
 						 */
-							$header['global_key'] = substr( md5($office_id.'-'.$start_date.'-'.$description."-".rand(1000,2000000) ) , 0,15);
-							$header['forecast_period'] = $forecast_period;
-							$header['budget_section_id'] = $budget_section_id;
-							$header['office_code'] = $office_id;
+							$header['global_key'] 			= substr( md5($office_id.'-'.$start_date.'-'.$description."-".rand(1000,2000000) ) , 0,15);
+							$header['forecast_period'] 		= $forecast_period;
+							$header['budget_section_id']	= $budget_section_id;
+							$header['office_code'] 			= $office_id;
 							$header['related_table_primary_key_value'] 	= $related_table_primary_key_value;
-							$header['description'] = $description;
-							$header['start_date'] 	= $start_date;
-							$header['end_date'] 	= $end_date;
+							$header['description'] 			= $description;
+							$header['start_date'] 			= $start_date;
+							$header['end_date'] 			= $end_date;
+							$header['createdby']			= $createdby;
+							$header['createddate']			= $createddate;	
+							$header['lastmodifiedby']		= $lastmodifiedby;	
+							$header['lastmodifieddate']		= $lastmodifieddate;	
 							
 							//Insert the table header information in budget table		
 							$this->db->insert("budget",$header);
@@ -1020,9 +1028,11 @@ class Budget extends CI_Controller
 							/**
 							 * Populate updateable headers
 							 */
-							$header['description'] = $description;
-							$header['start_date'] 	= $start_date;
-							$header['end_date'] 	= $end_date;
+							$header['description'] 		= $description;
+							$header['start_date'] 		= $start_date;
+							$header['end_date'] 		= $end_date;
+							$header['lastmodifiedby']	= $lastmodifiedby;	
+							$header['lastmodifieddate']	= $lastmodifieddate;
 							
 							///Update header information
 							$this->db->where($query_string);
