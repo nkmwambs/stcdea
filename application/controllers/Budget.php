@@ -142,7 +142,7 @@ class Budget extends CI_Controller
 	
 
 	
-	function view_budget($param1="",$param2="",$param3=""){
+	function view_budget($param1	=	"",$param2	=	"",$param3	=	"",$param	=	""){
 		if ($this->session->userdata('user_login') != 1)
             redirect(base_url() . 'login', 'refresh');
 		
@@ -177,8 +177,8 @@ class Budget extends CI_Controller
 			$page_data['load_budget'] = true;
 		}
 		
-		if($param3 == 'after_delete'){
-			$page_data['office_id'] = $param2;
+		if($param4 == 'after_delete'){
+			$page_data['office_id'] = $param3;
 			$page_data['load_budget'] = true;
 		}
 		
@@ -234,7 +234,7 @@ class Budget extends CI_Controller
 		}
 		$this->session->set_flashdata('flash_message',$msg);
 		
-		redirect(base_url().'budget/view_budget/'.$budget_type.'/'.$office_id.'/after_delete','refresh');
+		redirect(base_url().'budget/view_budget/'.$budget_type.'/'.strtotime($start)."/".$office_id.'/after_delete','refresh');
 	}
 	
 	function view_budget_scroll($param1="",$param2="",$param3=""){
