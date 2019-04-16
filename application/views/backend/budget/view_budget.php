@@ -1,16 +1,4 @@
-<?php
-ini_set('memory_limit', '1024M');
-
-// $view_budget_restriction = $this->db->get_where('field_restriction',
-// array('role_id'=>$this->session->role_id,'restricted_to_object'=>'view_budget'))->num_rows();
-
-$view_budget_restriction = 0;
-
-if($view_budget_restriction ==  0){
-
-//echo $test;
-
-?>
+<?php ini_set('memory_limit', '1024M'); ?>
 <div class="row">
 	<div class="col-xs-12">
 		<?php
@@ -53,12 +41,8 @@ if($view_budget_restriction ==  0){
 <hr class="<?=get_access('add_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>" />
 
 
-<?php
-}
-
-if(isset($load_budget)){
-	//echo $load_budget;
-?>
+<?php 
+if(isset($load_budget)){ ?>
 
 
 <!-- <div class="row">
@@ -105,16 +89,16 @@ if(isset($load_budget)){
 													
 													<div class="form-group">
 														<div class="col-xs-2">
-															<input type="text" name="start" class="form-control datepicker" value="<?=$period_start_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
+															<input type="text" id="start" name="start" class="form-control datepicker" value="<?=$period_start_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
 														</div>
 														<div class="col-xs-2">
-															<input type="text" name="end" class="form-control datepicker" value="<?=$period_end_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
+															<input type="text" id="end" name="end" class="form-control datepicker" value="<?=$period_end_date;?>" data-format='yyyy-mm-dd' readonly="readonly">
 														</div>
 														<div class="col-xs-2">
 															<?php
 																$range = range(0,4);
 															?>
-															<select class="form-control" name="forecast">
+															<select class="form-control" id="forecast" name="forecast">
 																<?php
 																	foreach($range as $row){
 																?>
@@ -126,6 +110,7 @@ if(isset($load_budget)){
 															</select>
 														</div>
 														<div class="col-xs-2">
+															<button type="submit" id="showBudget" class="btn btn-default">Go</button>
 															<button type="submit" id="delForecast" class="btn btn-default">Delete Forecast</button>
 														</div>
 													</div>
@@ -331,6 +316,17 @@ if(isset($load_budget)){
 		}
 		
 		
+	});
+	
+	$("#showBudget").on('click',function(ev){
+		
+		var forecast = $("#forecast").val();
+		var start_date = $("#start").val();
+		var frm = $(this).closest('form');
+		var url = '<?=base_url();?>budget/view_budget_by_forecast/<?=$budget_type;?>/'+start_date+'/<?=$office_id;?>/'+forecast;
+		var action = frm.prop('action',url);
+		//alert(frm.attr('action'));
+		//ev.preventDefault();
 	});
 	
 </script>

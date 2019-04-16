@@ -220,8 +220,10 @@ $(".scroll_month").on('click',function(){
 			scroll_count = 0;
 		}
 		var current_month = "<?=$current_date;?>";
+		//var current_month_full = "<?=date("Y-m-d",$current_date);?>";
 		var url = "<?=base_url();?>budget/bva_updates_scroll/"+current_month+"/"+scroll_count;		
 		
+		//alert(current_month_full);
 		
 		$.ajax({
 			url:url,

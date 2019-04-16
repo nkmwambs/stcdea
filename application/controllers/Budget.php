@@ -38,7 +38,7 @@ class Budget extends CI_Controller
 
 	/** AJAX LOADED CONTENT START**/
 	
-	function group_years_budget_by_office($start_date,$end_date,$section_id,$office_id=""){
+	function group_years_budget_by_office($start_date,$end_date,$section_id,$office_id="",$forecast = ""){
 		
 		
 		//Get all offices
@@ -49,7 +49,9 @@ class Budget extends CI_Controller
 		
 		//Get Lasted forecast period
 		$lasted_forecast_period = $this->get_lasted_year_forecast(date('Y',strtotime($start_date)));
-		
+		if($forecast!==""){
+			$lasted_forecast_period = $forecast;
+		}
 		//Get budget items
 		
 		$this->db->where(array('forecast_period'=>$lasted_forecast_period,'start_date>='=>$start_date,"end_date<="=>$end_date,"budget_section_id"=>$section_id));
@@ -98,7 +100,7 @@ class Budget extends CI_Controller
 	}
 	
 	
-	function costing($param1="",$section_id="",$office_id=""){
+	function costing($param1="",$section_id="",$office_id="",$forecast = ""){
 		
 		if($param1=="") $param1 = strtotime(date("Y-m-01"));
 				
@@ -108,7 +110,7 @@ class Budget extends CI_Controller
 		
 		$end_date = date('Y-m-t', strtotime('last day of december this year',$param1));
 		
-		$grouped = $this->group_years_budget_by_office($start_date,$end_date,$section_id,$office_id);
+		$grouped = $this->group_years_budget_by_office($start_date,$end_date,$section_id,$office_id,$forecast);
 		
 		$output['month_count'] = $month_count;
 		$output['grouped'] = $grouped;
@@ -140,11 +142,61 @@ class Budget extends CI_Controller
 	}
 
 	
-
-	
-	function view_budget($param1	=	"",$param2	=	"",$param3	=	"",$param	=	""){
+	function view_budget_by_forecast($budget_type,$selected_date,$office_id,$forecast){
 		if ($this->session->userdata('user_login') != 1)
             redirect(base_url() . 'login', 'refresh');
+		
+		$selected_date = strtotime($selected_date);
+				
+		$budget_section_id = $this->db->get_where('budget_section',array('name'=>get_phrase($budget_type)))
+		->row()->budget_section_id;
+		
+		extract($this->costing($selected_date,$budget_section_id,$office_id,$forecast));
+		
+		$page_title = get_phrase($budget_type);
+
+		$budget_section_id =  $this->db->get_where('budget_section',array('name'=>$page_title))
+		->row()->budget_section_id;
+		
+		$budget_section_fields = $this->db->get_where('budget_section_field',
+		array('budget_section_id'=>$budget_section_id))->result_object();
+		
+
+		//Get user restriction by office
+		$office_ids = $this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office');
+		
+		$this->db->where('office.status',1);
+		
+		if(count($office_ids) > 0) $this->db->where_in('office_id',$office_ids);
+		
+		$offices =  $this->db->select(array('office_id','office_code','name'))->get('office')->result_object();
+		
+		$page_data['office_id'] = $office_id;
+		$page_data['load_budget'] = true;		
+		$page_data['period_start_date'] = $period_start_date;
+		$page_data['period_end_date'] = $period_end_date;
+		$page_data['forecast'] = $forecast;
+		$page_data['offices'] = $offices;
+		$page_data['selected_date'] = $date;
+		$page_data['budget_type'] = $budget_type;
+		$page_data['budget_section_fields'] = $budget_section_fields;		
+		$page_data['grouped'] = $grouped;
+		$page_data['month'] = $month_count; 
+		$page_data['first_month_day'] = $date;
+		$page_data['period_start_date'] = $period_start_date;
+		$page_data['period_end_date'] = $period_end_date;
+		$page_data['view_type']  = "budget";
+		$page_data['page_name']  = 'view_budget';
+        $page_data['page_title'] = $page_title;
+		$this->load->view('backend/index', $page_data);
+	}
+
+	
+	function view_budget($param1	=	"",$param2	=	"",$param3	=	"",$param4	=	""){
+		if ($this->session->userdata('user_login') != 1)
+            redirect(base_url() . 'login', 'refresh');
+		
+		$forecast = "";
 		
 		$selected_date = strtotime($param2);
 				
@@ -160,7 +212,7 @@ class Budget extends CI_Controller
 		$budget_section_id = $this->db->get_where('budget_section',array('name'=>get_phrase($param1)))
 		->row()->budget_section_id;
 		
-		extract($this->costing($selected_date,$budget_section_id,$office_id));
+		extract($this->costing($selected_date,$budget_section_id,$office_id,$forecast));
 		
 		$page_title = get_phrase($param1);
 
@@ -237,40 +289,40 @@ class Budget extends CI_Controller
 		redirect(base_url().'budget/view_budget/'.$budget_type.'/'.strtotime($start)."/".$office_id.'/after_delete','refresh');
 	}
 	
-	function view_budget_scroll($param1="",$param2="",$param3=""){
-
-		$selected_date = strtotime($param3." months",$param2);
-		
-		if($param2=="") $selected_date = strtotime(date('Y-m-d'));	
-				
-		$budget_section_id = $this->db->get_where('budget_section',array('name'=>get_phrase($param1)))
-		->row()->budget_section_id;
-		
-		extract($this->costing($selected_date,$budget_section_id));
-		
-		$page_title = get_phrase($param1);
-
-		$budget_section_id =  $this->db->get_where('budget_section',array('name'=>$page_title))
-		->row()->budget_section_id;
-		
-		$budget_section_fields = $this->db->get_where('budget_section_field',
-		array('budget_section_id'=>$budget_section_id))->result_object();
-		
-		
-		$page_data['scroll_count'] = $param3;
-		$page_data['selected_date'] = $date;
-		$page_data['current_month'] = $param2;
-		$page_data['budget_type'] = $param1;
-		$page_data['budget_section_fields'] = $budget_section_fields;		
-		$page_data['grouped'] = $grouped;
-		$page_data['month'] = $month_count; 
-		$page_data['first_month_day'] = $date;
-		$page_data['period_start_date'] = $period_start_date;
-		$page_data['period_end_date'] = $period_end_date;
-		$page_data['page_title'] = $page_title;
-		
-		echo $this->load->view('backend/budget/view_budget',$page_data,true);
-	}
+	// function view_budget_scroll($param1="",$param2="",$param3=""){
+// 
+		// $selected_date = strtotime($param3." months",$param2);
+// 		
+		// if($param2=="") $selected_date = strtotime(date('Y-m-d'));	
+// 				
+		// $budget_section_id = $this->db->get_where('budget_section',array('name'=>get_phrase($param1)))
+		// ->row()->budget_section_id;
+// 		
+		// extract($this->costing($selected_date,$budget_section_id));
+// 		
+		// $page_title = get_phrase($param1);
+// 
+		// $budget_section_id =  $this->db->get_where('budget_section',array('name'=>$page_title))
+		// ->row()->budget_section_id;
+// 		
+		// $budget_section_fields = $this->db->get_where('budget_section_field',
+		// array('budget_section_id'=>$budget_section_id))->result_object();
+// 		
+// 		
+		// $page_data['scroll_count'] = $param3;
+		// $page_data['selected_date'] = $date;
+		// $page_data['current_month'] = $param2;
+		// $page_data['budget_type'] = $param1;
+		// $page_data['budget_section_fields'] = $budget_section_fields;		
+		// $page_data['grouped'] = $grouped;
+		// $page_data['month'] = $month_count; 
+		// $page_data['first_month_day'] = $date;
+		// $page_data['period_start_date'] = $period_start_date;
+		// $page_data['period_end_date'] = $period_end_date;
+		// $page_data['page_title'] = $page_title;
+// 		
+		// echo $this->load->view('backend/budget/view_budget',$page_data,true);
+	// }
 		
 	function sof(){
 		if ($this->session->userdata('user_login') != 1)
@@ -974,10 +1026,10 @@ class Budget extends CI_Controller
 						  * f) Same Forecast Period
 						  * 
 						  */
-						 $query_string = "YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
+						 $query_string = "global_key = '".$global_key."' OR (YEAR(start_date) = '".date('Y',strtotime($start_date))."' AND  
 						related_table_primary_key_value = ".$related_table_primary_key_value." AND 
 						budget_section_id=".$budget_section_id." AND office_code = ".$office_id." 
-						 AND global_key = '".$global_key."' AND forecast_period = '".$forecast_period."'";
+						 AND forecast_period = '".$forecast_period."')";
 						 
 		 				$this->db->join($table,"$table.$table_primary_key_field=budget.related_table_primary_key_value");
 						$this->db->where($query_string);
