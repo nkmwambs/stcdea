@@ -100,6 +100,7 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 					<th nowrap="nowrap" rowspan="3"><?=get_phrase('total_budget_per')." ".ucfirst($table);?></th>
 					<th nowrap="nowrap" rowspan="3"><?=ucfirst($table).' '.get_phrase('total_allocation');?></th>
 					<th nowrap="nowrap" rowspan="3"><?=ucfirst($table).' '.get_phrase('budget_gap');?></th>
+					
 				</tr>
 				<tr>
 					<?php
@@ -192,7 +193,7 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 				
 			</tbody>
 			
-			<tfoot>
+			<!-- <tfoot>
 				
 				<?php
 					//$budget_item = get_phrase('all')." ".ucwords(str_replace("_", " ",$table)).' '.get_phrase('cost').' '.get_phrase('DEA_allocation');
@@ -230,7 +231,49 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 					}
 				?>
 				
+			</tfoot> -->
+			
+			<tfoot>
+				
+				<?php
+					//print_r($bva_update);
+					
+					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
+					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'YTD Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_forecast_balance'=>'YTD Forecast Balance (F = B - (C+D+E))','year_allocation_balance'=>'Year Allocation Balance (G = F - A)');					
+					$row_spread_value = 0;
+					foreach($total_row_titles as $key=>$row){
+				?>
+					<tr>
+						<td nowrap="nowrap" style="border-right:solid black 1px;"><?=$row;?></td>
+						<td colspan="4"></td>
+						<?php
+						
+							foreach($active_deas as $sof=>$deas){
+									
+								foreach($deas as $dea){
+									
+									$amount = 0;
+									
+									if($i == count($deas)) $style = "border-right:solid black 1px;";
+									$amount = isset($bva_update[$key][$dea->dea_id])?$bva_update[$key][$dea->dea_id]:0;
+									
+						?>
+									<td style='<?=$style?> min-width:120px;' class='accounting' id='<?=$key;?>_<?=$dea->dea_id?>'><?=$amount;?></td>
+									
+						<?php
+									$i++;
+								}
+							}
+						?>
+						
+					</tr>
+				<?php
+						
+					}
+				?>
+				
 			</tfoot>
+			
 		</table>
 	</div>
 </div>
@@ -238,11 +281,11 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 <script>
 	$(document).ready(function(){
 		$(".accounting").each(function(i,el){
-			var formated = accounting.formatMoney($(this).html(), { symbol: "",  format: "%v %s" });	
-			var dea_allocation_total = 0;
+			//var formated = accounting.formatMoney($(this).html(), { symbol: "",  format: "%v %s" });	
+			//var dea_allocation_total = 0;
 			
 			//Format all values of tds with accounting class to currency format
-			$(this).html(formated);
+			//$(this).html(formated);
 			
 		});
 	});
@@ -251,8 +294,9 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 	
 	$('.allocate_input').on('click',function(){
 		inputdea_amount = $(this).val();
+		//alert(inputdea_amount);
 	});
-		
+	
 	$('.allocate_input').on('change',function(){
 		var id = $(this).attr('id');
 		var id_obj = id.split("_");
@@ -260,78 +304,111 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 		var budget_id = id_obj[0];
 		var alloc_year = id_obj[2];
 		var amount = $(this).val();
-		var allocation = $("#allocation_"+budget_id).html();
+		var cost_center_allocation = $("#allocation_"+budget_id).html();
 		var budgetamount = $("#budgetamount_"+budget_id).html();
 		var fundinggap = $("#fundinggap_"+budget_id).html();
 		var ytdallocation = $("#ytd_allocations_"+dea_id).html();
-		var loadeabalance = $("#loa_dea_balance_"+dea_id).html();
+		var year_allocation_balance = $("#year_allocation_balance_"+dea_id).html();
+		var year_forecast_balance = $("#year_forecast_balance_"+dea_id).html();
 		
-		//Calculate Ytd allocation on change - This should the first check
-		var dea_allocation_total = 0;
-		$(".inputdea_"+dea_id).each(function(i,el){
-			dea_allocation_total += parseFloat($(el).val());
-		});
+		var prev_value = inputdea_amount;
 		
-		var cost_center_allocation_total = 0;
-		$(".inputcostcenter_"+budget_id).each(function(i,el){
-			cost_center_allocation_total += parseFloat($(el).val());
-		});
+		//alert(inputdea_amount);
 		
+		dea_allocation_total = total_dea_allocation(dea_id);
+		
+		computed_cost_center_allocation_total = total_cost_center_allocation(budget_id);
+		
+		//Gap and balance computation
+		
+		computed_year_allocation_balance = parseFloat(year_forecast_balance) - parseFloat(dea_allocation_total);
+		
+		computed_fundinggap = parseFloat($("#budgetamount_"+budget_id).html()) - parseFloat(computed_cost_center_allocation_total);
+		 
+		
+		if(computed_year_allocation_balance < 0 || computed_fundinggap < 0){
+			alert("You have exceed the maximum possible amount that you can allocate or have exceed the maximum possible budget. Your changed value was not saved");
+			$(this).val(prev_value);			
+		}else{
+			//Assign values dynamically
+		
+			$("#year_allocation_balance_"+dea_id).html(computed_year_allocation_balance);
 			
-		/**Check if YTD Allocations exceed LOA DEA Balance when changing the allocation cell value
-		 * Return false  if exceeds - Always should be second check
-		 *  **/
-		ytd_allocation_and_loa_dea_balance_difference = parseFloat(accounting.unformat($("#loa_dea_balance_"+dea_id).html())) - parseFloat(dea_allocation_total);	
-		
-		if(ytd_allocation_and_loa_dea_balance_difference < 0){
-			alert('You have exceeded the LOA DEA Balance of '+ $("#loa_dea_balance_"+dea_id).html()+" by " + ytd_allocation_and_loa_dea_balance_difference);
-			$(this).val(inputdea_amount);
+			$("#ytd_allocations_"+dea_id).html(dea_allocation_total);
 			
-			return false;
+			$("#allocation_"+budget_id).html(computed_cost_center_allocation_total);
+			
+				
+			//Post with ajax
+			var data = {'budget_id':budget_id,'dea_id':dea_id,'alloc_year':alloc_year,'amount':amount};
+			var url = '<?=base_url();?>budget/update_dea_from_spread'
+			
+			$.ajax({
+				url:url,
+				data:data,
+				type:'POST',
+				success:function(resp){
+					//alert(resp);
+				},
+				error:function(){
+					alert('Error Occurred!');
+				}
+			});		
 		}
 		
-		fundinggap = parseFloat(accounting.unformat($("#budgetamount_"+budget_id).html())) - parseFloat(cost_center_allocation_total);
-		
-		if(fundinggap < 0){
-			alert('You have exceeded the Funding gap of '+ $("#budgetamount_"+budget_id).html()+" by " + fundinggap);
-			$(this).val(inputdea_amount);
 			
-			return false;
-		}
-		
-		
-		/**SPAN holding value tobe used when printing the sheet to excel**/
-		$('#spandea_'+budget_id+'_'+dea_id+'_'+alloc_year).html($(this).val());
-		
-		/**Compute allocation and funding gap when the this value changes**/
-		allocation_formatted = accounting.formatMoney(cost_center_allocation_total, { symbol: "",  format: "%v %s" });// Format %v = value, %s = currency symbol
-		$("#allocation_"+budget_id).html(allocation_formatted);
-		
-		
-		fundinggap = parseFloat(accounting.unformat(budgetamount)) - parseFloat(accounting.unformat(cost_center_allocation_total)); 
-		fundinggap_formatted = accounting.formatMoney(fundinggap, { symbol: "",  format: "%v %s" });
-		$("#fundinggap_"+budget_id).html(fundinggap_formatted);
-		
-		
-		formated_dea_allocation_total = accounting.formatMoney(dea_allocation_total, { symbol: "",  format: "%v %s" });
-		ytdallocation = $("#ytd_allocations_"+dea_id).html(formated_dea_allocation_total);
-			
-		
-		//Post with ajax
-		var data = {'budget_id':budget_id,'dea_id':dea_id,'alloc_year':alloc_year,'amount':amount};
-		var url = '<?=base_url();?>budget/update_dea_from_spread'
-		
-		$.ajax({
-			url:url,
-			data:data,
-			type:'POST',
-			success:function(resp){
-				//alert(resp);
-			},
-			error:function(){
-				alert('Error Occurred!');
-			}
-		});
 		
 	});
+	
+	function fundinggap_value(budget_id){
+		
+		var cost_center_allocation_total = total_cost_center_allocation(budget_id);
+		
+		var fundinggap = parseFloat($("#budgetamount_"+budget_id).html()) - parseFloat(cost_center_allocation_total);
+		
+		return fundinggap;
+		
+	}
+	
+	function ytd_allocation_and_loa_dea_balance_difference(elem,dea_id){
+			/**Check if YTD Allocations exceed LOA DEA Balance when changing the allocation cell value
+			 * Return false  if exceeds - Always should be second check
+			 *  **/
+			
+			var total_dea_allocation = total_dea_allocation(dea_id);
+			
+			//ytd_allocation_and_loa_dea_balance_difference = parseFloat($("#loa_dea_balance_"+dea_id).html()) - parseFloat(total_dea_allocation);	
+			
+			// if(ytd_allocation_and_loa_dea_balance_difference < 0){
+				// alert('You have exceeded the LOA DEA Balance of '+ $("#loa_dea_balance_"+dea_id).html()+" by " + ytd_allocation_and_loa_dea_balance_difference);
+				// elem.val(inputdea_amount);
+// 				
+				// return false;
+			// }else{
+				// return true;
+			// }
+			
+			return ytd_allocation_and_loa_dea_balance_difference;
+	}
+	
+	function total_cost_center_allocation(budget_id){
+			
+			var cost_center_allocation_total = 0;
+			$(".inputcostcenter_"+budget_id).each(function(i,el){
+				cost_center_allocation_total += parseFloat($(el).val());
+			});
+			
+			return cost_center_allocation_total;
+		}
+	
+	
+	function total_dea_allocation(dea_id){
+			//Calculate Ytd allocation on change - This should the first check
+			var dea_allocation_total = 0;
+			$(".inputdea_"+dea_id).each(function(i,el){
+				dea_allocation_total += parseFloat($(el).val());
+			});	
+			
+		return dea_allocation_total;	
+	}
 </script>

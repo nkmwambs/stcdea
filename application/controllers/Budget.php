@@ -1745,16 +1745,29 @@ class Budget extends CI_Controller
 		
 		//Compute Full Year DEA Balance array
 		$dea_keyed_year_dea_balance = array();
-		foreach(array_keys($dea_keyed_past_loa_actual) as $dea_id){
+		foreach(array_keys($dea_keyed_ytd_actual) as $dea_id){
 			$year_forecast = isset($combined_array['year_forecast'][$dea_id])?$combined_array['year_forecast'][$dea_id]:0;
-			//$initial_loa_actuals = isset($dea_keyed_past_loa_actual[$dea_id])?$dea_keyed_past_loa_actual[$dea_id]:0;
 			$year_actuals = isset($dea_keyed_ytd_actual[$dea_id])?$dea_keyed_ytd_actual[$dea_id]:0;
-			//$sum_of_loa_actuals = $initial_loa_actuals + $loa_actuals;
-			$dea_keyed_year_dea_balance[$dea_id] = $year_forecast - $year_actuals;
+			$month_expense = isset($dea_keyed_expense[$dea_id])?$dea_keyed_expense[$dea_id]:0;
+			$month_commitment = isset($dea_keyed_commitment[$dea_id])?$dea_keyed_commitment[$dea_id]:0;
+			$dea_keyed_year_dea_balance[$dea_id] = $year_forecast - ($year_actuals + $month_expense + $month_commitment);
+			
 		}
 
-		$combined_array['year_dea_balance'] = $dea_keyed_year_dea_balance;
-				
+		$combined_array['year_forecast_balance'] = $dea_keyed_year_dea_balance;
+		
+		//Compute allocation gap based on YTD forecast balance
+		
+		$dea_keyed_allocation_dea_balance = array();
+		foreach(array_keys($dea_keyed_year_dea_balance) as $dea_id){
+			$year_forecast_balance = isset($combined_array['year_forecast_balance'][$dea_id])?$combined_array['year_forecast_balance'][$dea_id]:0;
+			$dea_keyed_allocation = isset($dea_keyed_allocation[$dea_id])?$dea_keyed_allocation[$dea_id]:0;
+
+			$dea_keyed_allocation_dea_balance[$dea_id] = $year_forecast_balance - $dea_keyed_allocation;
+			
+		}
+		
+		$combined_array['year_allocation_balance'] = $dea_keyed_allocation_dea_balance;		
 		
 		return $combined_array;
 		 	
