@@ -239,7 +239,7 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 					//print_r($bva_update);
 					
 					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
-					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'YTD Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_forecast_balance'=>'YTD Forecast Balance (F = B - (C+D+E))','year_allocation_balance'=>'Year Allocation Balance (G = F - A)');					
+					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Full Year Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_forecast_balance'=>'Full Year Forecast Balance (F = B - (C+D+E))','year_allocation_balance'=>'Full Year Allocation Balance (G = F - A)');					
 					$row_spread_value = 0;
 					foreach($total_row_titles as $key=>$row){
 				?>
@@ -338,6 +338,8 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 			
 			$("#allocation_"+budget_id).html(computed_cost_center_allocation_total);
 			
+			$("#fundinggap_"+budget_id).html(fundinggap_value(budget_id));
+			
 				
 			//Post with ajax
 			var data = {'budget_id':budget_id,'dea_id':dea_id,'alloc_year':alloc_year,'amount':amount};
@@ -394,10 +396,11 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 	function total_cost_center_allocation(budget_id){
 			
 			var cost_center_allocation_total = 0;
-			$(".inputcostcenter_"+budget_id).each(function(i,el){
-				cost_center_allocation_total += parseFloat($(el).val());
-			});
 			
+			$(".inputcostcenter_"+budget_id).each(function(i,el){
+				cost_center_allocation_total = parseFloat(cost_center_allocation_total) + parseFloat($(el).val());
+			});
+			//alert(cost_center_allocation_total);
 			return cost_center_allocation_total;
 		}
 	
