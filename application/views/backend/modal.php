@@ -86,12 +86,12 @@
 		document.getElementById('delete_link').setAttribute('href' , delete_url);
 	}
 	
-	function confirm_action(url,perform_link="")
+	function confirm_action(url)
 	{
-		if(perform_link == "") perform_link = 'perform_link'; 
 		jQuery('#modal-5').modal('show', {backdrop: 'static'});
 		document.getElementById('perform_link').setAttribute('href' , url);
 	}
+	
 	function confirm_dialog(url,reload=false){
 			BootstrapDialog.confirm('<?php echo get_phrase("Are_you_sure_you_want_to_perform_this_action?");?>', function(result){
             if(!result) {
@@ -137,12 +137,12 @@
                 
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title" style="text-align:center;">Are you sure to delete this information ?</h4>
+                    <h4 class="modal-title" style="text-align:center;">Are you sure to perform this action ?</h4>
                 </div>
                 
                 
                 <div class="modal-footer" style="margin:0px; border-top:0px; text-align:center;">
-                    <a href="#" class="btn btn-danger" id="delete_link"><?php echo get_phrase('delete');?></a>
+                    <a href="#" class="btn btn-danger" id="delete_link"><?php echo get_phrase('ok');?></a>
                     <button type="button" class="btn btn-info" data-dismiss="modal"><?php echo get_phrase('cancel');?></button>
                 </div>
             </div>
@@ -150,16 +150,17 @@
     </div>
     
     <!-- (Confirm Modal)-->
-    <div class="modal fade" style="position: absolute;top:0px;bottom:0px;" id="modal-5"> 
+    <!-- (Confirm Modal)-->
+    <div class="modal fade" id="modal-5">
         <div class="modal-dialog">
             <div class="modal-content" style="margin-top:100px;">
-                
+
                 <div class="modal-header">
                     <button id="" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title" style="text-align:center;">Are you sure you want to perform this action?</h4>
                 </div>
-                
-                
+
+
                 <div class="modal-footer" style="margin:0px; border-top:0px; text-align:center;">
                     <a href="#" class="btn btn-danger" id="perform_link"><?php echo get_phrase('Ok');?></a>
                     <button id="" type="button" class="btn btn-info" data-dismiss="modal"><?php echo get_phrase('cancel');?></button>

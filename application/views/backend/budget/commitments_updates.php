@@ -17,16 +17,18 @@
                     			<a href="<?=base_url();?>Budget/upload_monthly_update/commitment_update" 
 		                    		class="btn btn-default"><?=get_phrase('upload_commitments');?> 
 		                    		<i class="fa fa-upload"></i></a>
+		                    		
+		                    	<a href="<?=base_url();?>Budget/cleared_lpo" 
+		                    		class="btn btn-default"><?=get_phrase('cleared_LPO');?> 
+		                    		<i class="fa fa-thumbs-up"></i></a>
+		                    			
                     		</div>
                     	</div>
                     	<hr />
                     	
                     	<table class="table table-striped table-responsive datatable">
                     		<thead>
-                    			<th><?=get_phrase('office');?></th>
-                    			<th><?=get_phrase('SOF_code');?></th>
-                    			<th><?=get_phrase('SOF_name');?></th>
-                    			<th><?=get_phrase('DEA_code');?></th>
+                    			<th><?=get_phrase('L.P.O');?></th>
                     			<th><?=get_phrase('commitment_date');?></th>
                     			<th><?=get_phrase('amount');?></th>
                     			<th><?=get_phrase('action');?></th>
@@ -36,12 +38,9 @@
                     				foreach($commitments as $commitment){
                     			?>
                     				<tr>
-                    					<td><?=$commitment->office;?></td>
-                    					<td><?=$commitment->sof_code;?></td>
-                    					<td><?=$commitment->sof;?></td>
-                    					<td><?=$commitment->dea_code;?></td>
+                    					<td><?=$commitment->lpo;?></td>
                     					<td><?=$commitment->month;?></td>
-                    					<td><?=number_format($commitment->amount,2)?></td>
+                    					<td><?=number_format($commitment->amount,2);?></td>
                     					<td class="<?=get_access('show_commitment_update_action','view_commitment_update',0);?>">
                     						<div class="btn-group">
 									                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -49,21 +48,30 @@
 									                    </button>
 									                    <ul class="dropdown-menu dropdown-default pull-right" role="menu">
 									                   		
-									                   		<li class="<?=get_access('edit_commitment_update','show_commitment_update_action');?>">
-									                   			<a class="" href="<?=base_url();?>budget/edit_commitment_update/<?=$commitment->commitment_id;?>">
-									                               <i class="fa fa-pencil"></i>
-									                               		<?php echo get_phrase('edit_commitment');?>
+									                   		<li class="<?=get_access('pay_commitment_single_item','show_commitment_update_action');?>">
+																<a class="" id="perform_link" href="#" onclick="showAjaxModal('<?=base_url();?>modal/popup/modal_pay_commitment/<?=$commitment->commitment_id;?>')">
+									                               <i class="fa fa-thumbs-up"></i>
+									                               		<?php echo get_phrase('pay_an_item');?>
 									                             </a>
 									                   		</li>
 									                   		
-									                   		<li class="<?=get_access('edit_commitment_update','show_commitment_update_action');?> divider"></li>
+									                   		<li class="divider"></li>
 									                   		
-									                   		<li class="<?=get_access('delete_commitment_update','show_commitment_update_action');?>">
-																<a class="" id="perform_link" href="#" onclick="confirm_action('<?=base_url();?>Budget/delete_commitment_update/<?=$commitment->commitment_id;?>')">
-									                               <i class="fa fa-trash"></i>
+									                   		<li class="<?=get_access('pay_commitment_full_lpo','show_commitment_update_action');?>">
+																<a class="" id="perform_link" href="#" onclick="confirm_modal('<?=base_url();?>budget/pay_full_commitment/<?=$commitment->commitment_id;?>')">
+									                               <i class="fa fa-money"></i>
+									                               		<?php echo get_phrase('pay_full_commitment');?>
+									                             </a>
+									                   		</li>
+									                   		
+									                   		<li class="divider"></li>
+									                   		
+									                   		<li class="<?=get_access('delete_commitment','show_commitment_update_action');?>">
+																<a class="" id="perform_link" href="#" onclick="confirm_action('<?=base_url();?>budget/delete_commitment/<?=$commitment->commitment_id;?>')">
+									                               <i class="fa fa-times"></i>
 									                               		<?php echo get_phrase('delete_commitment');?>
 									                             </a>
-									                   		</li>	
+									                   		</li>		
 									                   </ul>
 									               </div>
                     					</td>

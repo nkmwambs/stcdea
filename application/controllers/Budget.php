@@ -1495,16 +1495,106 @@ class Budget extends CI_Controller
 		}
 	}
 	
+	function delete_all_paid_commitments_updates(){
+		$msg = 'No items to delete';	
+		//Get all cleared LPOs
+		
+		$cleared_commitments_obj = $this->db->get_where('commitment',array('cleared'=>1));
+		
+		if($cleared_commitments_obj->num_rows()>0){
+			foreach($cleared_commitments_obj->result_object() as $row){
+				$commitment_id = $row->commitment_id;
+				
+				$delete_condition = array('commitment_id'=>$commitment_id);
+				$this->db->delete('commitment_detail', $delete_condition);
+				$this->db->delete('commitment', $delete_condition);
+			}
+			
+			$msg = 'Items deleted successful';
+		
+		}
+		$this->session->set_flashdata('flash_message',$msg);
+		redirect(base_url().'budget/cleared_lpo','refresh');
+	}
+	
+	function pay_lpo_item($commitment_detail_id){
+		//Check status of the commitment
+		$check_commitment = $this->db->get_where('commitment_detail',
+		array('commitment_detail_id'=>$commitment_detail_id))->row();
+		
+		$data = array();
+		
+		if($check_commitment->status == 0){
+			$data['status'] = 1;
+			$data['cleared_month'] = date('Y-m-t');
+		}else{
+			$data['status'] = 0;
+			$data['cleared_month'] = '0000-00-00';
+		}
+		$this->db->where(array('commitment_detail_id'=>$commitment_detail_id));
+		$this->db->update('commitment_detail',$data);
+		
+		//Check if all lpo items are cleared
+		$commitment_id = $this->db->get_where('commitment_detail',
+		array('commitment_detail_id'=>$commitment_detail_id))->row()->commitment_id;
+		
+		$count_uncleared = $this->db->get_where('commitment_detail',
+		array('status'=>0,'commitment_id'=>$commitment_id))->num_rows();
+ 		
+		$this->db->where(array('commitment_id'=>$commitment_id));
+		if($count_uncleared == 0){
+			$this->db->update('commitment',array('cleared'=>1,'cleared_month'=>date('Y-m-t')));
+			echo "Invoice Cleared";
+		}else{
+			$this->db->update('commitment',array('cleared'=>0,'cleared_month'=>'0000-00-00'));
+			echo "Update successful";
+		}
+		
+		
+	}
+
+	function pay_full_commitment($commitment_id){
+		$data['status'] = 1;
+		$data['cleared_month'] = date('Y-m-t');
+		
+		$this->db->where(array('status'=>0,'commitment_id'=>$commitment_id));
+		$this->db->update('commitment_detail',$data);
+		
+		$data2['cleared_month'] = date('Y-m-t');
+		$data2['cleared'] = 1;
+		$this->db->where(array('commitment_id'=>$commitment_id));
+		$this->db->update('commitment',$data2);
+		
+		$this->session->set_flashdata('flash_message','Items paid successful');
+		redirect(base_url().'budget/commitments_updates','refresh');
+	}
+
+	function cleared_lpo(){
+		if ($this->session->userdata('user_login') != 1)
+           redirect(base_url() . 'login', 'refresh');
+    	
+		$this->db->select(array('commitment.commitment_id','lpo','month'));
+		$this->db->group_by('lpo');
+		$this->db->select_sum('commitment_detail.amount');
+		$this->db->join('commitment_detail','commitment_detail.commitment_id=commitment.commitment_id');    
+		$commitments = $this->db->get_where('commitment',array('cleared'=>1))->result_object();
+			
+		$page_data['commitments'] = $commitments;       
+		$page_data['view_type']  = "budget";
+		$page_data['page_name']  = __FUNCTION__;
+        $page_data['page_title'] = get_phrase(__FUNCTION__);
+		$this->load->view('backend/index', $page_data);			
+	}
+	
 	function commitments_updates(){
 		if ($this->session->userdata('user_login') != 1)
            redirect(base_url() . 'login', 'refresh');
-        
-		$this->db->join('dea','dea.dea_id=commitment.dea_id'); 
-		$this->db->join('sof','sof.sof_id=dea.sof_id'); 
-		$this->db->join('office','office.office_id=dea.office_id');   
-		$this->db->select(array('commitment_id','office.name as office','sof.sof_code','sof.name as sof',
-		'dea.dea_code','commitment.month','commitment.amount'));     
-		$commitments = $this->db->get('commitment')->result_object();
+		
+		$this->db->select(array('commitment.commitment_id','lpo','month'));
+		$this->db->group_by('lpo');
+		$this->db->select_sum('commitment_detail.amount');
+		$this->db->join('commitment_detail','commitment_detail.commitment_id=commitment.commitment_id');    
+		$commitments = $this->db->get_where('commitment',array('cleared'=>0))->result_object();
 			
 		$page_data['commitments'] = $commitments;
 		$page_data['view_type']  = "budget";
@@ -1513,65 +1603,65 @@ class Budget extends CI_Controller
 		$this->load->view('backend/index', $page_data);	
 	}
 	
-	function add_commitment_update($param1=""){
-		if ($this->session->userdata('user_login') != 1)
-           redirect(base_url() . 'login', 'refresh');
-           
-		if($param1 == "") $param1 = strtotime(date('Y-m-01'));
-		
-        $active_deas = $this->group_active_deas_by_sof($param1);
-        
-		$page_data['active_deas'] = $active_deas;  
-		    
-		$page_data['view_type']  = "budget";
-		$page_data['page_name']  = __FUNCTION__;
-        $page_data['page_title'] = get_phrase(__FUNCTION__);
-		$this->load->view('backend/index', $page_data);		
-	}
-	
-	function edit_commitment_update($param1="",$param2=""){
-		if ($this->session->userdata('user_login') != 1)
-           redirect(base_url() . 'login', 'refresh');
-        
-		$this->db->join('dea','dea.dea_id=commitment.dea_id'); 
-		$this->db->join('sof','sof.sof_id=dea.sof_id'); 
-		$this->db->join('office','office.office_id=dea.office_id');   
-		$this->db->select(array('commitment_id','commitment.dea_id','commitment.lpo','commitment.description','office.name as office','sof.sof_code','sof.name as sof','dea.dea_code','commitment.month','commitment.amount'));
-         
-		$commitment_record = $this->db->get_where('commitment',array('commitment_id'=>$param1))->row();
-		
-		if($param2 == "") $param2 = strtotime(date('Y-m-01'));
-		
-        $active_deas = $this->group_active_deas_by_sof($param2);
-		
-		$page_data['active_deas'] = $active_deas;
-		$page_data['commitment'] = $commitment_record;	
-		$page_data['view_type']  = "budget";
-		$page_data['page_name']  = __FUNCTION__;
-        $page_data['page_title'] = get_phrase(__FUNCTION__);
-		$this->load->view('backend/index', $page_data);
-	}
-	
-	function update_commitment_update($param1=""){
-		$msg = get_phrase('failed');
-		
-		$data[0]['commitment_id'] = $param1;
-		$data[0]['dea_id'] = $this->input->post('dea_id');
-		$data[0]['lpo'] = $this->input->post('lpo');
-		$data[0]['description'] = $this->input->post('description');
-		$data[0]['month'] = $this->input->post('month');
-		$data[0]['amount'] = $this->input->post('amount');
-		
-		//$this->db->where(array('commitment_id',$param1));
-		$this->db->update_batch('commitment',$data,'commitment_id');
-		
-		if($this->db->affected_rows() > 0 ){
-			$msg = get_phrase('success');
-		}
-		
-		$this->session->set_flashdata('flash_message',$msg);
-		redirect(base_url().'budget/commitments_updates','refresh');
-	}
+	// function add_commitment_update($param1=""){
+		// if ($this->session->userdata('user_login') != 1)
+           // redirect(base_url() . 'login', 'refresh');
+//            
+		// if($param1 == "") $param1 = strtotime(date('Y-m-01'));
+// 		
+        // $active_deas = $this->group_active_deas_by_sof($param1);
+//         
+		// $page_data['active_deas'] = $active_deas;  
+// 		    
+		// $page_data['view_type']  = "budget";
+		// $page_data['page_name']  = __FUNCTION__;
+        // $page_data['page_title'] = get_phrase(__FUNCTION__);
+		// $this->load->view('backend/index', $page_data);		
+	// }
+// 	
+	// function edit_commitment_update($param1="",$param2=""){
+		// if ($this->session->userdata('user_login') != 1)
+           // redirect(base_url() . 'login', 'refresh');
+//         
+		// $this->db->join('dea','dea.dea_id=commitment.dea_id'); 
+		// $this->db->join('sof','sof.sof_id=dea.sof_id'); 
+		// $this->db->join('office','office.office_id=dea.office_id');   
+		// $this->db->select(array('commitment_id','commitment.dea_id','commitment.lpo','commitment.description','office.name as office','sof.sof_code','sof.name as sof','dea.dea_code','commitment.month','commitment.amount'));
+//          
+		// $commitment_record = $this->db->get_where('commitment',array('commitment_id'=>$param1))->row();
+// 		
+		// if($param2 == "") $param2 = strtotime(date('Y-m-01'));
+// 		
+        // $active_deas = $this->group_active_deas_by_sof($param2);
+// 		
+		// $page_data['active_deas'] = $active_deas;
+		// $page_data['commitment'] = $commitment_record;	
+		// $page_data['view_type']  = "budget";
+		// $page_data['page_name']  = __FUNCTION__;
+        // $page_data['page_title'] = get_phrase(__FUNCTION__);
+		// $this->load->view('backend/index', $page_data);
+	// }
+// 	
+	// function update_commitment_update($param1=""){
+		// $msg = get_phrase('failed');
+// 		
+		// $data[0]['commitment_id'] = $param1;
+		// $data[0]['dea_id'] = $this->input->post('dea_id');
+		// $data[0]['lpo'] = $this->input->post('lpo');
+		// $data[0]['description'] = $this->input->post('description');
+		// $data[0]['month'] = $this->input->post('month');
+		// $data[0]['amount'] = $this->input->post('amount');
+// 		
+		// //$this->db->where(array('commitment_id',$param1));
+		// $this->db->update_batch('commitment',$data,'commitment_id');
+// 		
+		// if($this->db->affected_rows() > 0 ){
+			// $msg = get_phrase('success');
+		// }
+// 		
+		// $this->session->set_flashdata('flash_message',$msg);
+		// redirect(base_url().'budget/commitments_updates','refresh');
+	// }
 	
 	function delete_commitment_update($param1=""){
 		$this->db->delete('commitment',array('commitment_id'=>$param1));
@@ -1586,18 +1676,18 @@ class Budget extends CI_Controller
 		redirect(base_url().'budget/commitments_updates','refresh');
 	}
 	
-	function insert_commitment_update(){
-			
-		$input = $this->input->post();
-		
-		$this->db->insert('commitment',$input);
-		
-		if($this->db->affected_rows() > 0){
-			echo "Success";
-		}else{
-			echo "Recorded not inserted";
-		}
-	}
+	// function insert_commitment_update(){
+// 			
+		// $input = $this->input->post();
+// 		
+		// $this->db->insert('commitment',$input);
+// 		
+		// if($this->db->affected_rows() > 0){
+			// echo "Success";
+		// }else{
+			// echo "Recorded not inserted";
+		// }
+	// }
 
 	
 
@@ -2093,15 +2183,89 @@ class Budget extends CI_Controller
 		/** Expense update is cumulative, remove the previous records uploaded **/
 		if($table == 'expense' || $table == 'bva_update' )	$this->db->truncate('expense');
 		
-		//if($table == 'bva_update') $this->db->truncate('expense');
-				
-		$this->db->insert_batch($table,$data);
-
+		if(substr_count($param1, 'commitment')){
+			$this->insert_commitment($data);
+		}
+		//}else{
+			// $this->db->insert_batch($table,$data);
+		// }		
+// 		
+// 
 		if($this->db->affected_rows() > 0){
 			echo "Success";
 		}else{
 			echo "No data inserted";
 		}
+	}
+
+	function insert_commitment($data_array){
+		
+		$refined_array = array();
+		
+		$cnt = 0;
+		foreach($data_array as $values){
+			
+			$refined_array[$values['lpo']]['header'] = array('lpo'=>$values['lpo'],
+			'month'=>$values['month']);
+			
+			if($refined_array[$values['lpo']]['header']['lpo'] == $values['lpo'] && $values['cleared'] == 1){
+				//,'cleared'=>$values['cleared']
+				$refined_array[$values['lpo']]['header']['cleared'] = $values['cleared'];
+			}
+			
+			$refined_array[$values['lpo']]['detail'][] = array('dea_id'=>$values['dea_id'],
+			'description'=>$values['description'],'amount'=>$values['amount']);
+			
+			$cnt++;
+		}
+		
+		$data_header = array();
+		
+		foreach($refined_array as $row){
+			
+			//Check if LPO exists
+			$commitment_obj = $this->db->get_where('commitment',array('lpo'=>$row['header']['lpo']));
+			
+			if($commitment_obj->num_rows() == 0){
+				$data_header['lpo'] = $row['header']['lpo'];
+				$data_header['month'] = $row['header']['month'];
+				
+				$this->db->insert('commitment',$data_header);
+				
+				$header_id = $this->db->insert_id();
+				
+				$data_detail = array();
+			
+				foreach($row['detail'] as $detail){
+					$data_detail['commitment_id'] = $header_id;
+					$data_detail['dea_id'] = $detail['dea_id'];
+					$data_detail['description'] = $detail['description'];
+					$data_detail['amount'] = $detail['amount'];
+					
+					$this->db->insert('commitment_detail',$data_detail);
+				}
+				
+			}else{
+				if($row['header']['cleared'] == 1){
+					$header_update['cleared'] = 1;
+					$header_update['cleared_month'] = date('Y-m-t');
+					
+					$details_update['status'] = 1;
+					$details_update['cleared_month'] = date('Y-m-t');
+					
+					$this->db->where(array('commitment_id'=>$commitment_obj->row()->commitment_id));
+					$this->db->update('commitment',$header_update);
+					
+					$this->db->where(array('commitment_id'=>$commitment_obj->row()->commitment_id));
+					$this->db->update('commitment_detail',$details_update);
+				}
+			}					
+			
+			
+		}
+		
+		return false;
+		
 	}
 	
 	function assign_expense_to_date($allocation,$month,$timeline){
