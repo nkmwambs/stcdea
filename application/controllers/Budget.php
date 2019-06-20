@@ -509,6 +509,12 @@ class Budget extends CI_Controller
 		/**Relationships**/
 		$crud->set_relation("office_id", "office", "name");
 		$crud->set_relation("sof_id", "sof", "name");
+		$crud->set_relation_n_n('shared', 'shared_dea', 'office', 'dea_id', 'office_id', 'name','priority');
+		
+		/** Change field types **/
+		$crud->change_field_type('budget_section_id','dropdown', array('1'=>'Staff Cost','2'=>'Thematic Cost','3'=>'Non Thematic Cost'));
+		$crud->change_field_type('description','text');
+		$crud->unset_texteditor('description','full_text');
 		
 		/**Columns, Edit and Add forms fields**/	
 		$crud->unset_columns(array("lastmodifieddate","createddate"));
