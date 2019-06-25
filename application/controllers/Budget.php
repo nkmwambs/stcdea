@@ -467,13 +467,15 @@ class Budget extends CI_Controller
 				$insert_dea_array['dea_code'] = $dea['dea_code'];
 				$insert_dea_array['description'] = $dea['description'];
 				$insert_dea_array['budget_section_id'] = $dea['budget_section_id'];
-				$insert_dea_array['shared'] = count($shared_offices)> 1?"Yes":"No";
+				//$insert_dea_array['shared'] = count($shared_offices)> 1?"Yes":"No";
 				$insert_dea_array['initial_amount'] = $dea['dea_amount'];
 				
 				if($count_dea->num_rows() > 0 ){
 					$this->db->where(array('dea_code'=>$dea['dea_code']));
 					$this->db->update('dea',$insert_dea_array);
 				}else{
+					$insert_dea_array['shared'] = count($shared_offices)> 1?"Yes":"No";
+					
 					$this->db->insert('dea',$insert_dea_array);
 					
 					$dea_insert_id = $this->db->insert_id();
