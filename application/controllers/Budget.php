@@ -421,11 +421,7 @@ class Budget extends CI_Controller
 			$sofs[$row['sof_code']]['start_date'] 	= $row['start_date'];
 			$sofs[$row['sof_code']]['end_date'] 	= $row['end_date'];
 			
-			foreach($rows as $dea){
-				// $deas[$dea['sof_code']][$dea['dea_code']]['dea_code'] 	= 	$dea['dea_code'];
-				// $deas[$dea['sof_code']][$dea['dea_code']]['office_code'] = 	$dea['office_code'];
-				// $deas[$dea['sof_code']][$dea['dea_code']]['dea_amount'] 	= 	$dea['dea_amount'];
-				
+			foreach($rows as $dea){				
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['dea_code'] 	= 	$dea['dea_code'];
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['description'] = 	$dea['description'];
 				$sofs[$dea['sof_code']]['dea'][$dea['dea_code']]['budget_section_id'] = 	$dea['budget_section_id'];
@@ -464,11 +460,14 @@ class Budget extends CI_Controller
 				//Check if dea exists
 				$count_dea = $this->db->get_where('dea',array('dea_code'=>$dea['dea_code']));
 				
+				//Explode the office code string
+				$shared_offices = explode(';', $dea['office_code']);
+				
 				$insert_dea_array['sof_id'] = $sof_id;
 				$insert_dea_array['dea_code'] = $dea['dea_code'];
 				$insert_dea_array['description'] = $dea['description'];
 				$insert_dea_array['budget_section_id'] = $dea['budget_section_id'];
-				$insert_dea_array['office_id'] = $this->db->get_where('office',array('office_code'=>$dea['office_code']))->row()->office_id;
+				$insert_dea_array['shared'] = count($shared_offices)> 1?"Yes":"No";
 				$insert_dea_array['initial_amount'] = $dea['dea_amount'];
 				
 				if($count_dea->num_rows() > 0 ){
@@ -476,6 +475,15 @@ class Budget extends CI_Controller
 					$this->db->update('dea',$insert_dea_array);
 				}else{
 					$this->db->insert('dea',$insert_dea_array);
+					
+					$dea_insert_id = $this->db->insert_id();
+					
+					foreach($shared_offices as $office){
+						$shared_dea['office_id'] = $this->db->get_where('office',array('office_code'=>$office))->row()->office_id;
+						$shared_dea['dea_id'] = $dea_insert_id;
+						
+						$this->db->insert('shared_dea',$shared_dea);
+					}
 				}
 				
 			}
@@ -507,9 +515,9 @@ class Budget extends CI_Controller
 		$crud->unset_jquery();
 		
 		/**Relationships**/
-		$crud->set_relation("office_id", "office", "name");
+		//$crud->set_relation("office_id", "office", "name");
 		$crud->set_relation("sof_id", "sof", "name");
-		$crud->set_relation_n_n('shared', 'shared_dea', 'office', 'dea_id', 'office_id', 'name','priority');
+		$crud->set_relation_n_n('office_id', 'shared_dea', 'office', 'dea_id', 'office_id', 'name','priority');
 		
 		/** Change field types **/
 		$crud->change_field_type('budget_section_id','dropdown', array('1'=>'Staff Cost','2'=>'Thematic Cost','3'=>'Non Thematic Cost'));
@@ -518,7 +526,10 @@ class Budget extends CI_Controller
 		
 		/**Columns, Edit and Add forms fields**/	
 		$crud->unset_columns(array("lastmodifieddate","createddate"));
-		$crud->unset_fields(array("lastmodifieddate","createddate"));
+		$crud->unset_fields(array("lastmodifieddate","createddate",'shared'));
+		
+		/**Callbacks**/
+		$crud->callback_after_update(array($this,'update_shared_column_value'));
 		
 		$crud->display_as("sof_id",get_phrase("SOF_name"))
 		->display_as("office_id",get_phrase("office_name"));
@@ -529,6 +540,23 @@ class Budget extends CI_Controller
         $page_data['page_title'] = get_phrase(__FUNCTION__);
 		$output = array_merge($page_data,(array)$output);
         $this->load->view('backend/index', $output);
+	}
+
+	function update_shared_column_value($post_array, $primary_key){
+		
+		//Check current shared status
+		$shared_status = $this->db->get_where('dea',array('dea_id'=>$primary_key))->row()->shared;
+			
+		if(count($post_array['office_id']) < 2 && $shared_status == 'Yes'){
+			//$post_array['shared'] = 'No';
+			$this->db->where(array('dea_id'=>$primary_key));
+			$this->db->update('dea',array('shared'=>'No'));
+		}elseif(count($post_array['office_id']) > 1 && $shared_status == 'No'){
+			$this->db->where(array('dea_id'=>$primary_key));
+			$this->db->update('dea',array('shared'=>'Yes'));
+		}
+		
+		return true;
 	}
 	
 	function add_allocation_to_account_staff_record($accounts,$year,$office_id = ""){
