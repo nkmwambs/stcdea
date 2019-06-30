@@ -1,10 +1,4 @@
-<?php
-
-//print_r($this->stcdea_model->get_restricted_objects($this->session->login_user_id,'office'));
-
-$current_date = isset($current_month)?$current_month:$month_epoch;
-
-?>
+<?php $current_date = isset($current_month)?$current_month:$month_epoch;?>
 
 <style>
 
@@ -26,7 +20,7 @@ td, th {
     position: -webkit-sticky;
     top: 0;
     z-index: 999;
-    background-color: #000;
+    background-color: #ccc123;
     color: #fff;
 }
 
@@ -38,7 +32,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 }
  td:nth-child(-n+3), td:nth-child(-n+3)
  {
-  background-color:gray;
+  background-color:#ccc;
  }
  
  
@@ -58,21 +52,8 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 
 <div class="row">
 		<div class="col-sm-12">
-			<!-- <div class="panel panel-primary " data-collapsed="0">
-                    <div class="panel-heading">
-                        <div class="panel-title">
-                            <i class="fa fa-pencil"></i>
-                            <?php echo get_phrase('BVA_updates');?> : <?=date('F Y',$month_epoch);?>
-                        </div>
-                    </div>
-                    <div class="panel-body" style="overflow: auto;"> -->
                     	
                        <div class="row">
-							<!-- <div class="col-xs-12">  -->                	
-		                    	<!-- <a href="<?=base_url();?>Budget/add_bva_update" 
-		                    		class="<?=get_access('add_bva_update','view_BVA_update');?> 
-		                    		btn btn-default"><?=get_phrase('add_bva_update');?> <i class="fa fa-reorder"> </i>
-		                    	</a> -->
 		                    	
 		                    	<div class="<?=get_access('add_bva_update','view_BVA_update');?> col-xs-2">
 		                    		<a href="<?=base_url();?>Budget/upload_monthly_update/bva_update" 
@@ -94,8 +75,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 		                    	<?php
 									}
 		                    	?>
-		                    	
-	                   		<!-- </div> -->
+		                
 	                   	</div> 			
                     	<hr />
                     	
@@ -123,7 +103,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 				                    		<th rowspan="2"><?=get_phrase('DEA_description');?></th>
 				                    		<!-- <th rowspan="2"><?=get_phrase('DEA_initial_amount');?></th> -->
 				                    		<th colspan="4" style="text-align: center;"><?=get_phrase('month');?></th>
-				                    		<th colspan="4" style="text-align: center;"><?=get_phrase('YTD');?></th>
+				                    		<th colspan="5" style="text-align: center;"><?=get_phrase('YTD');?></th>
 				                    		<th colspan="2" style="text-align: center;"><?=get_phrase('full_year');?></th>
 				                    		<th colspan="3" style="text-align: center;"><?=get_phrase('life_of_award');?></th>
 			                    		</tr>
@@ -140,6 +120,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 			                    			<th><?=get_phrase('actual');?></th>
 			                    			<th><?=get_phrase('variance');?></th>
 			                    			<th>% <?=get_phrase('variance');?></th>
+			                    			<th><?=get_phrase('year_remaining_balance');?></th>
 			                    			
 			                    			<!--Full Year Headers-->
 			                    			<th><?=get_phrase('forecast');?></th>
@@ -153,6 +134,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     				</thead>
                     				<tbody>
                     					<?php
+                   
                     						foreach($bva_updates as $update){
                     					?>
                     						<tr>
@@ -173,6 +155,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     							<td nowrap="nowrap"><?=number_format($update['ytd']['actual'],2);?></td>
                     							<td nowrap="nowrap"><?=number_format($update['ytd']['variance'],2);?></td>
                     							<td nowrap="nowrap"><?=number_format(($update['ytd']['per_variance']*100),2);?> %</td>
+                    							<td nowrap="nowrap"><?=number_format($update['ytd']['year_remaining_balance'],2);?></td>
                     							
                     							<!--Full Year-->
                     							<td nowrap="nowrap"><?=number_format($update['full_year']['forecast'],2);?></td>
@@ -216,15 +199,15 @@ $(".scroll_month").on('click',function(){
 	
 	$("#scroll,#reset").on('click',function(){
 		var scroll_count = $("#scroll_count").val();
+		
 		if($(this).attr('id') == 'reset'){
 			scroll_count = 0;
 		}
+		
 		var current_month = "<?=$current_date;?>";
-		//var current_month_full = "<?=date("Y-m-d",$current_date);?>";
+
 		var url = "<?=base_url();?>budget/bva_updates_scroll/"+current_month+"/"+scroll_count;		
-		
-		//alert(current_month_full);
-		
+		//alert(scroll_count);
 		$.ajax({
 			url:url,
 			beforeSend:function(){

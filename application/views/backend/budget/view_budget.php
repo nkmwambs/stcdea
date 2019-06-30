@@ -44,21 +44,6 @@
 <?php 
 if(isset($load_budget)){ ?>
 
-
-<!-- <div class="row">
-	<div class="col-xs-12">
-		<div class="btn btn-default scroll_month scroll_minus"><i class="fa fa-backward"></i></div>
-		<div class="btn btn-default scroll_month current_month" id="current_month"><?=date('F Y',strtotime($selected_date));?></div>
-		<div class="btn btn-default scroll_month scroll_plus"><i class="fa fa-forward"></i></div>
-		<input type="hidden" id="scroll_count" value="<?=isset($scroll_count)?$scroll_count:0;?>" />
-		<div class="btn btn-default" id="scroll">Go</div>
-		<?php $current_date = isset($current_month)?$current_month:strtotime($selected_date);?>
-		<div class="btn btn-default" id="reset">Reset to <?=date("F Y",$current_date);?></div>
-	</div>
-</div>
-
-<hr/> -->
-
 <div class="row">
 	<div class="col-xs-12">
 		
@@ -79,7 +64,7 @@ if(isset($load_budget)){ ?>
 											<th colspan="3">
 												<span class="<?=get_access('allocate_'.$budget_type.'_budget_line','view_'.$budget_type.'_budget');?>"><a href="<?php echo base_url("Budget/allocate_dea_spread/".$office_id."/".$budget_type."/".strtotime('first day of january',strtotime(date('Y-m-d')))."/".strtotime('last day of december',strtotime(date('Y-m-d'))));?>" id="" class="btn btn-default"><?=get_phrase('allocate_DEA').' ('.$office_name.')';?></a></span>
 											</th>
-											<th colspan="13" style="border-left: 2px solid gray;">
+											<th colspan="15" style="border-left: 2px solid gray;">
 												<span class="<?=get_access('delete_'.$budget_type.'_forecast','view_'.$budget_type.'_budget');?>">
 													
 													<?php
@@ -111,6 +96,8 @@ if(isset($load_budget)){ ?>
 														</div>
 														<div class="col-xs-2">
 															<button type="submit" id="showBudget" class="btn btn-default">Go</button>
+														</div>
+														<div class="col-xs-2">	
 															<button type="submit" id="delForecast" class="btn btn-default">Delete Forecast</button>
 														</div>
 													</div>
@@ -124,7 +111,7 @@ if(isset($load_budget)){ ?>
 											<th colspan="8">
 												<?=get_phrase('office_name')?>: <?=$office_name;?>	
 											</th>
-											<th colspan="8">
+											<th colspan="10">
 												<?=get_phrase('office_code')?>: <?=$this->crud_model->get_field_value("office","office_id",$office_code,"office_code");?>												
 											</th>
 
