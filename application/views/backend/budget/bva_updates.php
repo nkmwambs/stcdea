@@ -9,7 +9,7 @@
 }
 
 td, th {
-    border: 1px solid #dddddd;
+    border: 1px solid #FFA07A;
     text-align: left;
     padding: 8px;
 }
@@ -20,7 +20,7 @@ td, th {
     position: -webkit-sticky;
     top: 0;
     z-index: 999;
-    background-color: #ccc123;
+    background-color: #FFA07A;
     color: #fff;
 }
 

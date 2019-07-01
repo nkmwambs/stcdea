@@ -13,7 +13,7 @@ if($this->session->login_user_id == 1){
 }
 
 td, th {
-    border: 1px solid #dddddd;
+    border: 1px solid #FFA07A;
     text-align: left;
     padding: 8px;
 }
@@ -24,7 +24,7 @@ td, th {
     position: -webkit-sticky;
     top: 0;
     z-index: 999;
-    background-color: #ccc123;
+    background-color: #FFA07A;
     color: #fff;
 }
 
@@ -41,7 +41,7 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
  
  tfoot td:first-child
  {
-  background-color:#ccc;
+  background-color:#FFA07A;
  }
  
  
