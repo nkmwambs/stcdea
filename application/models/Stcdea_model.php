@@ -340,7 +340,7 @@ class Stcdea_model extends CI_Model {
 		$combined_array['year_forecast_balance'] = $dea_keyed_year_dea_balance;
 		$combined_array['year_allocation_balance'] = $dea_keyed_allocation_dea_balance;
 		
-		/**Current month BVA Update**/
+		/**Current month BVA Update - Combined several keys e.g. year_remaining_balance**/
 		$combined_array = array_merge($combined_array, $this -> month_bva_parameters($month_start_date, $office_id));
 		
 		

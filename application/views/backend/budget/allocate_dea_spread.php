@@ -236,10 +236,10 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 			<tfoot>
 				
 				<?php
-					//print_r($bva_update);
+					print_r($bva_update);
 					
 					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
-					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Full Year Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_forecast_balance'=>'Full Year Forecast Balance (F = B - (C+D+E))','year_allocation_balance'=>'Full Year Allocation Balance (G = F - A)');					
+					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Full Year Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_remaining_balance'=>'Year Remaining Balance','year_allocation_balance'=>'Available for allocation');					
 					$row_spread_value = 0;
 					foreach($total_row_titles as $key=>$row){
 				?>
@@ -378,17 +378,6 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 			 *  **/
 			
 			var total_dea_allocation = total_dea_allocation(dea_id);
-			
-			//ytd_allocation_and_loa_dea_balance_difference = parseFloat($("#loa_dea_balance_"+dea_id).html()) - parseFloat(total_dea_allocation);	
-			
-			// if(ytd_allocation_and_loa_dea_balance_difference < 0){
-				// alert('You have exceeded the LOA DEA Balance of '+ $("#loa_dea_balance_"+dea_id).html()+" by " + ytd_allocation_and_loa_dea_balance_difference);
-				// elem.val(inputdea_amount);
-// 				
-				// return false;
-			// }else{
-				// return true;
-			// }
 			
 			return ytd_allocation_and_loa_dea_balance_difference;
 	}
