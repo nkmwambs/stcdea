@@ -24,7 +24,7 @@ td, th {
     position: -webkit-sticky;
     top: 0;
     z-index: 999;
-    background-color: #000;
+    background-color: #ccc123;
     color: #fff;
 }
 
@@ -36,12 +36,12 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 }
  tbody td:first-child
  {
-  background-color:gray;
+  background-color:#ccc;
  }
  
  tfoot td:first-child
  {
-  background-color:gray;
+  background-color:#ccc;
  }
  
  
