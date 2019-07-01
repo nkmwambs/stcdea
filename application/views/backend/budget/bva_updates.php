@@ -8,7 +8,7 @@
     width: 100%;
 }
 
-td, th {
+td {
     border: 1px solid #FFA07A;
     text-align: left;
     padding: 8px;
@@ -22,6 +22,7 @@ td, th {
     z-index: 999;
     background-color: #FFA07A;
     color: #fff;
+    border: 1px solid #ccc;
 }
 
 th:nth-child(-n+3), td:nth-child(-n+3)
@@ -102,10 +103,10 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 				                    		<th rowspan="2"><?=get_phrase('SOF_name');?></th>
 				                    		<th rowspan="2"><?=get_phrase('DEA_description');?></th>
 				                    		<!-- <th rowspan="2"><?=get_phrase('DEA_initial_amount');?></th> -->
-				                    		<th colspan="4" style="text-align: center;"><?=get_phrase('month');?></th>
-				                    		<th colspan="5" style="text-align: center;"><?=get_phrase('YTD');?></th>
-				                    		<th colspan="2" style="text-align: center;"><?=get_phrase('full_year');?></th>
-				                    		<th colspan="3" style="text-align: center;"><?=get_phrase('life_of_award');?></th>
+				                    		<th colspan="<?=count($bva_updates[0]['month'])?>" style="text-align: center;"><?=get_phrase('month');?></th>
+				                    		<th colspan="<?=count($bva_updates[0]['ytd'])?>" style="text-align: center;"><?=get_phrase('YTD');?></th>
+				                    		<th colspan="<?=count($bva_updates[0]['full_year'])?>" style="text-align: center;"><?=get_phrase('full_year');?></th>
+				                    		<th colspan="<?=count($bva_updates[0]['loa'])?>" style="text-align: center;"><?=get_phrase('life_of_award');?></th>
 			                    		</tr>
 			                    		
 			                    		<tr>
@@ -120,10 +121,11 @@ th:nth-child(-n+3), td:nth-child(-n+3)
 			                    			<th><?=get_phrase('actual');?></th>
 			                    			<th><?=get_phrase('variance');?></th>
 			                    			<th>% <?=get_phrase('variance');?></th>
-			                    			<th><?=get_phrase('year_remaining_balance');?></th>
+			                    			
 			                    			
 			                    			<!--Full Year Headers-->
 			                    			<th><?=get_phrase('forecast');?></th>
+			                    			<th><?=get_phrase('year_remaining_balance');?></th>
 			                    			<th><?=get_phrase('burn_rate');?></th>
 			                    			
 			                    			<!--LOA Headers-->
@@ -155,10 +157,10 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     							<td nowrap="nowrap"><?=number_format($update['ytd']['actual'],2);?></td>
                     							<td nowrap="nowrap"><?=number_format($update['ytd']['variance'],2);?></td>
                     							<td nowrap="nowrap"><?=number_format(($update['ytd']['per_variance']*100),2);?> %</td>
-                    							<td nowrap="nowrap"><?=number_format($update['ytd']['year_remaining_balance'],2);?></td>
                     							
                     							<!--Full Year-->
                     							<td nowrap="nowrap"><?=number_format($update['full_year']['forecast'],2);?></td>
+                    							<td nowrap="nowrap"><?=number_format($update['full_year']['year_remaining_balance'],2);?></td>
                     							<td nowrap="nowrap"><?=number_format($update['full_year']['burn_rate']*100,2);?> %</td>
                     							
                     							<!--LOA-->

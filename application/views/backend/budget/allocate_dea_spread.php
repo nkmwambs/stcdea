@@ -6,15 +6,29 @@ if($this->session->login_user_id == 1){
 ?>
 <style>
 
+.rotate {
+  transform: rotate(-90deg);
+  transform-origin: top left;
+}
+
+.form-control{
+	max-width: 100px;
+	text-align: right;
+}
+
+.pull_left{
+	text-align:left;
+}
+
 .table-fixed  {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
 }
 
-td, th {
+td {
     border: 1px solid #FFA07A;
-    text-align: left;
+    text-align: right;
     padding: 8px;
 }
 
@@ -26,6 +40,10 @@ td, th {
     z-index: 999;
     background-color: #FFA07A;
     color: #fff;
+    border: 1px solid #ccc;
+    height: 75px;
+    width: 50px;
+    text-align:left;
 }
 
 thead th:first-child,tbody td:first-child, tfoot td:first-child
@@ -96,17 +114,17 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 			<thead>
 				<tr>
 					<th nowrap="nowrap" rowspan="3"><?=ucwords(str_replace("_", " ",$table));?> Name</th>
-					<th nowrap="nowrap" rowspan="3"><?=ucwords(str_replace("_", " ",$table));?> Code</th>
-					<th nowrap="nowrap" rowspan="3"><?=get_phrase('total_budget_per')." ".ucfirst($table);?></th>
-					<th nowrap="nowrap" rowspan="3"><?=ucfirst($table).' '.get_phrase('total_allocation');?></th>
-					<th nowrap="nowrap" rowspan="3"><?=ucfirst($table).' '.get_phrase('budget_gap');?></th>
+					<th nowrap="nowrap" rowspan="3"><div class="rotate"><?=ucwords(str_replace("_", " ",$table));?> Code</div></th>
+					<th nowrap="nowrap" rowspan="3"><div class="rotate"><?=get_phrase('total_budget_per')." ".ucfirst($table);?></div></th>
+					<th nowrap="nowrap" rowspan="3"><div class="rotate"><?=ucfirst($table).' '.get_phrase('total_allocation');?></div></th>
+					<th nowrap="nowrap" rowspan="3"><div class="rotate"><?=ucfirst($table).' '.get_phrase('budget_gap');?></div></th>
 					
 				</tr>
 				<tr>
 					<?php
 						foreach($active_deas as $sof=>$deas){
 					?>
-						<th colspan="<?=count($deas);?>" style="border-right:solid white 1px;"><?=$sof;?></th>
+						<th colspan="<?=count($deas);?>" title="<?=$sof;?>" style="border-right:solid white 1px;"><?=substr($sof,0,50);?></th>
 					<?php
 						}
 					?>
@@ -120,11 +138,10 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 							$style = "";
 							
 							foreach($deas as $dea){
-								//if($i == count($deas)) $style = "style='border-right:solid black 1px;'";
 					?>
-								<th <?=$style?> ><?=$dea->dea_code.': '.$dea->description;?></th>
+								<th  <?=$style?> title="<?=$dea->description;?>"><?=$dea->dea_code.': '.substr($dea->description,0,50);?></th>
 					<?php
-								//$i++;
+
 							}
 						}
 					?>
@@ -137,8 +154,8 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 						$code = $table.'_code';
 				?>
 					<tr>
-						<td nowrap="nowrap"><?=$account->name;?></td>
-						<td nowrap="nowrap" style="border-right:solid black 1px;"><?=$account->$code;?></td>
+						<td nowrap="nowrap" class="pull_left"><?=$account->name;?></td>
+						<td nowrap="nowrap" class="" style="border-right:solid black 1px;"><?=$account->$code;?></td>
 						<td nowrap="nowrap" class="accounting" id="budgetamount_<?=$account->budget_id;?>"><?=$account->amount;?></td>
 						<?php
 							$allocation = !empty($account->allocation)?(array)$account->allocation:array();
@@ -200,12 +217,13 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 					//print_r($bva_update);
 					
 					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Year Forecast (B)','initial_loa_actuals'=>'Initial LOA Actuals b/f (C)','loa_actuals'=>'LOA Actual (D)','loa_dea_balance'=>'LOA DEA Balance (E = B - (C+D))');
-					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Full Year Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_remaining_balance'=>'Year Remaining Balance','year_allocation_balance'=>'Available for allocation');					
+					// $total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'year_forecast'=>'Full Year Forecast (B)','ytd_actuals'=>'YTD Actual (C)','expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_remaining_balance'=>'Year Remaining Balance','year_allocation_balance'=>'Available for allocation');					
+					$total_row_titles = array('ytd_allocations'=>"Forecast DEA Allocation (A)",'expenses'=>'Month Expenses (D)','commitments'=>'Month Commitments (E)','year_remaining_balance'=>'Year Remaining Balance','year_allocation_balance'=>'Available for allocation');					
 					$row_spread_value = 0;
 					foreach($total_row_titles as $key=>$row){
 				?>
 					<tr>
-						<td nowrap="nowrap" style="border-right:solid black 1px;"><?=$row;?></td>
+						<td nowrap="nowrap" class="pull_left" style="border-right:solid black 1px;"><?=$row;?></td>
 						<td colspan="4"></td>
 						<?php
 						
@@ -271,6 +289,9 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 		var ytdallocation = $("#ytd_allocations_"+dea_id).html();
 		var year_allocation_balance = $("#year_allocation_balance_"+dea_id).html();
 		var year_forecast_balance = $("#year_forecast_balance_"+dea_id).html();
+		var year_remaining_balance = $("#year_remaining_balance_"+dea_id).html();
+		var expenses = $("#expenses_"+dea_id).html();
+		var commitments = $("#commitments_"+dea_id).html();
 		
 		var prev_value = inputdea_amount;
 		
@@ -282,7 +303,7 @@ thead th:first-child,tbody td:first-child, tfoot td:first-child
 		
 		//Gap and balance computation
 		
-		computed_year_allocation_balance = parseFloat(year_forecast_balance) - parseFloat(dea_allocation_total);
+		computed_year_allocation_balance = parseFloat(year_remaining_balance) - (parseFloat(expenses) + parseFloat(commitments) + parseFloat(dea_allocation_total));
 		
 		computed_fundinggap = parseFloat($("#budgetamount_"+budget_id).html()) - parseFloat(computed_cost_center_allocation_total);
 		 

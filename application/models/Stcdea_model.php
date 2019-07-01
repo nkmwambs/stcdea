@@ -256,7 +256,7 @@ class Stcdea_model extends CI_Model {
 
 	function full_dea_balance($month_start_date,$office_id) {
 		
-		$dea_keyed_ytd_actual = $this -> ytd_actuals_for_the_year($month_start_date, $office_id);
+		//$dea_keyed_ytd_actual = $this -> ytd_actuals_for_the_year($month_start_date, $office_id);
 		$month_bva_parameters = $this->month_bva_parameters($month_start_date, $office_id);
 		$dea_keyed_expense = $this -> month_expenses_per_dea($month_start_date, $office_id);
 		$dea_keyed_commitment = $this -> month_commitment_per_dea($month_start_date, $office_id);
@@ -264,16 +264,16 @@ class Stcdea_model extends CI_Model {
 		//Compute Full Year DEA Balance array
 		
 		$dea_keyed_year_dea_balance = array();
-		foreach (array_keys($dea_keyed_ytd_actual) as $dea_id) {
-			$year_forecast = isset($month_bva_parameters['year_forecast'][$dea_id]) ? $month_bva_parameters['year_forecast'][$dea_id] : 0;
+		foreach (array_keys($month_bva_parameters['year_remaining_balance']) as $dea_id) {
+			$year_remaining = isset($month_bva_parameters['year_remaining_balance'][$dea_id]) ? $month_bva_parameters['year_remaining_balance'][$dea_id] : 0;
 			
-			$year_actuals = isset($dea_keyed_ytd_actual[$dea_id]) ? $dea_keyed_ytd_actual[$dea_id] : 0;
+			//$year_actuals = isset($dea_keyed_ytd_actual[$dea_id]) ? $dea_keyed_ytd_actual[$dea_id] : 0;
 			
 			$month_expense = isset($dea_keyed_expense[$dea_id]) ? $dea_keyed_expense[$dea_id] : 0;
 		
 			$month_commitment = isset($dea_keyed_commitment[$dea_id]) ? $dea_keyed_commitment[$dea_id] : 0;
 		
-			$dea_keyed_year_dea_balance[$dea_id] = $year_forecast - ($year_actuals + $month_expense + $month_commitment);
+			$dea_keyed_year_dea_balance[$dea_id] = $year_remaining - ($month_expense + $month_commitment);
 
 		}		
 		
@@ -427,9 +427,10 @@ class Stcdea_model extends CI_Model {
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['actual'] = $ytd_actuals;
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['variance'] = $ytd_variance;
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['per_variance'] = $ytd_per_variance;
-			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['ytd']['year_remaining_balance'] = $year_remaining_balance;
+
 			
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['full_year']['forecast'] = $year_forecast;
+			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['full_year']['year_remaining_balance'] = $year_remaining_balance;
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['full_year']['burn_rate'] = $year_burn_rate;
 			
 			$deas_with_sof_and_office_information_and_bva_month_updates[$loop]['loa']['forecast'] = $loa_forecast;
