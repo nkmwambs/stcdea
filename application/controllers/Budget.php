@@ -564,11 +564,14 @@ class Budget extends CI_Controller
 	}
 	
 	function add_allocation_to_account_staff_record($accounts,$year,$office_id = ""){
+			
+		$this->db->cache_on();
 		
 		$this->db->select(array('budget_id','allocation.dea_id','amount'));
 		$this->db->join('dea','dea.dea_id = allocation.dea_id');
 		$this->db->join('shared_dea','shared_dea.dea_id = dea.dea_id');
 		$allocations_for_the_year = $this->db->get_where('allocation',array('alloc_year'=>$year,'shared_dea.office_id'=>$office_id));
+		$this->db->cache_off();
 		
 		$accounts_with_dea = array();
 		
@@ -676,7 +679,7 @@ class Budget extends CI_Controller
  		
 		$year = date('Y',$first_day_of_the_year_epoch);
  		
-		$this->db->cache_on();
+		//$this->db->cache_on();
 		
 		$records = $this->add_allocation_to_account_staff_record($account,$year,$office_id);
 		 
@@ -684,7 +687,7 @@ class Budget extends CI_Controller
 		
 		$bva_update_summary = $this->stcdea_model->get_month_bva_update($this->get_latest_bva_start_date(),$office_id,$section_id);
 		
-		$this->db->cache_off();
+		//$this->db->cache_off();
 		
 		//Check if scrolled year is same as current year
 		$is_same_year = 0;
