@@ -141,7 +141,7 @@ th:nth-child(-n+3), td:nth-child(-n+3)
                     					?>
                     						<tr>
                     							<!--Description-->	
-                    							<td nowrap="nowrap"><?=$update['dea_information']['office'];?></td>
+                    							<td><?=$update['dea_information']['office'];?></td>
                     							<td><?=$update['dea_information']['sof_code'].': '.$update['dea_information']['sof'];?></td>
                     							<td><?=$update['dea_information']['dea_code'].': '.$update['dea_information']['description'];?></td>
                     							

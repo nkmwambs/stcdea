@@ -46,12 +46,27 @@ td {
     text-align:left;
 }
 
-thead th:first-child,tbody td:first-child, tfoot td:first-child
+
+tbody td:nth-child(-n+5)
 {
   position:sticky;
   left:0px;
- 
+ background-color:#ccc;
 }
+
+thead th:nth-child(-n+5)
+{
+  position:sticky;
+  left:0px;
+}
+
+tfoot th:nth-child(-n+2)
+{
+  position:sticky;
+  left:0px;
+
+}
+
  tbody td:first-child
  {
   background-color:#ccc;

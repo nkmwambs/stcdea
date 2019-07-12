@@ -2359,7 +2359,8 @@ class Budget extends CI_Controller
 		$this->db->select(array('office.name as office','budget_section.short_name as budget_type'));
 		$this->db->select_sum('amount');
 		$this->db->join('dea','dea.dea_id=allocation.dea_id');
-		$this->db->join('office','office.office_id=dea.office_id');
+		$this->db->join('shared_dea','shared_dea.dea_id=dea.dea_id');
+		$this->db->join('office','office.office_id=shared_dea.office_id');
 		$this->db->join('budget','budget.budget_id=allocation.budget_id');
 		$this->db->join('budget_section','budget_section.budget_section_id = budget.budget_section_id');
 		$this->db->group_by(array('office.name','budget_section.name','alloc_year'));
