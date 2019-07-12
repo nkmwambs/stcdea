@@ -676,9 +676,15 @@ class Budget extends CI_Controller
  		
 		$year = date('Y',$first_day_of_the_year_epoch);
  		
+		$this->db->cache_on();
+		
 		$records = $this->add_allocation_to_account_staff_record($account,$year,$office_id);
 		 
 		$active_deas = $this->group_active_deas_by_sof($first_day_of_the_year_epoch,$office_id, $section_id);
+		
+		$bva_update_summary = $this->stcdea_model->get_month_bva_update($this->get_latest_bva_start_date(),$office_id,$section_id);
+		
+		$this->db->cache_off();
 		
 		//Check if scrolled year is same as current year
 		$is_same_year = 0;
@@ -687,7 +693,7 @@ class Budget extends CI_Controller
 		}	
 		
 	
-		$page_data['bva_update'] = $this->stcdea_model->get_month_bva_update($this->get_latest_bva_start_date(),$office_id,$section_id);
+		$page_data['bva_update'] = $bva_update_summary;
 		$page_data['latest_bva_update'] = $this->get_latest_bva_start_date();
 		$page_data['office_id'] = $office_id;
 		$page_data['table'] = $table; 
