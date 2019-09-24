@@ -571,6 +571,7 @@ class Budget extends CI_Controller
 		$this->db->join('dea','dea.dea_id = allocation.dea_id');
 		$this->db->join('shared_dea','shared_dea.dea_id = dea.dea_id');
 		$allocations_for_the_year = $this->db->get_where('allocation',array('alloc_year'=>$year,'shared_dea.office_id'=>$office_id));
+		
 		$this->db->cache_off();
 		
 		$accounts_with_dea = array();
