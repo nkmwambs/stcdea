@@ -279,7 +279,7 @@ class Account extends CI_Controller
 		$crud = new grocery_CRUD();
 
 		/**Set theme to flexigrid**/
-		$crud->set_theme('tablestrap');//flexigrid
+		$crud->set_theme('flexigrid');//flexigrid
 
 		$crud->unset_bootstrap();
 		$crud->unset_jquery();
